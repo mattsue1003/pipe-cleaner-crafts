@@ -11,7 +11,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&family=LXGW+WenKai+TC:wght@400;700&display=swap">
 <style>
 /* Layout: 頂端一條織紋細帶＋明體標題＋單元分頁；左邊鼠尾草綠桌面舞台、右邊步驟卡；下方是兩個單元的教案牆。色調：亞麻、赤陶、鼠尾草綠，安靜舒壓 */
 :root{
@@ -116,7 +116,7 @@ header p{margin:4px 0 0;color:var(--muted);font-size:14px;line-height:1.55;max-w
   .mbar button{min-height:54px;min-width:84px;padding:4px 12px;white-space:nowrap;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-family:var(--font-display);font-size:19px;cursor:pointer;box-shadow:none}
   .mbar #mNext{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 var(--accent-deep)}
   .mbar .mid{min-width:0;text-align:center;line-height:1.25;cursor:pointer;background:none;border:none;color:var(--ink);font:inherit;box-shadow:none}
-  .mbar .mid small{display:block;font-size:13px;color:var(--muted)}
+  .mbar .mid small{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mbar .mid b{display:block;font-family:var(--font-display);font-weight:400;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
   body.lesson-mode .hud{display:none}
@@ -208,6 +208,63 @@ details.notes summary{cursor:pointer;font-family:var(--font-display);font-weight
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 20px;border-radius:999px;font-size:15px;z-index:60;max-width:calc(100% - 32px);text-align:center;transition:opacity .3s}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){ .card:hover{transform:none} }
+/* ── 毛根造型：另一套介面。手作教室的貼紙感——楷體標題、深藍墨線、紫色重點、方角按鈕加實心陰影；電腦版說明在左、步驟清單在右 ── */
+html[data-site="pipe"]{
+  --bg:#f3f4f8; --dot:#e6e8f0; --surface:#ffffff; --ink:#27304a; --muted:#646d88; --line:#cfd5e3;
+  --accent:#6a56b8; --accent-deep:#4c3d92; --accent-soft:#eeebfa; --mint:#5b8fb0; --mat:#989cab;
+  --shadow:4px 4px 0 rgba(39,48,74,.14); --focus:#c2477a;
+  --font-display:"LXGW WenKai TC","Kaiti TC","DFKai-SB","BiauKai",serif;
+}
+html[data-site="pipe"] .bunting{height:12px;background:repeating-linear-gradient(-55deg,#6a56b8 0 12px,#f390b5 12px 24px,#f6c636 24px 36px,#5b8fb0 36px 48px,#ffffff 48px 60px)}
+html[data-site="pipe"] .bunting span{display:none}
+html[data-site="pipe"] header.top{background:var(--surface);border:2px solid var(--ink);border-radius:18px;padding:12px 18px;box-shadow:var(--shadow)}
+html[data-site="pipe"] .seal{border-radius:14px;border:2px solid var(--ink);background:var(--accent);color:#fff;box-shadow:3px 3px 0 var(--ink);transform:rotate(-6deg);font-weight:700}
+html[data-site="pipe"] header h1{letter-spacing:.04em;font-weight:700;font-size:clamp(28px,3.2vw,38px)}
+html[data-site="pipe"] .other{border:2px solid var(--ink);border-radius:12px;color:var(--ink);font-weight:500}
+html[data-site="pipe"] .rail-in,html[data-site="pipe"] .tools,html[data-site="pipe"] .xcard,html[data-site="pipe"] .panel,html[data-site="pipe"] details.notes{border:2px solid var(--ink);border-radius:14px}
+html[data-site="pipe"] .stage-wrap{border:2px solid var(--ink);border-radius:14px}
+html[data-site="pipe"] .stage-wrap.is-fs,html[data-site="pipe"] .stage-wrap:fullscreen{border:none;border-radius:0;box-shadow:none}
+html[data-site="pipe"] .views button,html[data-site="pipe"] .fsbtn{border-radius:10px;background:rgba(39,48,74,.78)}
+html[data-site="pipe"] .views button[aria-pressed="true"]{background:var(--accent)}
+html[data-site="pipe"] .hud span{border-radius:10px;background:rgba(39,48,74,.78)}
+html[data-site="pipe"] .lhead h2{font-weight:700;font-size:34px;letter-spacing:.02em}
+html[data-site="pipe"] .lnum{display:inline-block;background:var(--ink);color:#fff;padding:2px 10px;border-radius:8px;letter-spacing:.06em}
+html[data-site="pipe"] .chip{border-radius:8px;background:var(--surface);border:1.5px solid var(--line)}
+html[data-site="pipe"] .stars{color:#d89a1c}
+html[data-site="pipe"] .stepcard{border:2px dashed var(--accent);border-radius:14px;background:var(--accent-soft)}
+html[data-site="pipe"] .sc-top b{font-weight:700;font-size:26px}
+html[data-site="pipe"] .seg button,html[data-site="pipe"] .row button,html[data-site="pipe"] .ghost,html[data-site="pipe"] .navrow button,html[data-site="pipe"] .txt{border:2px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink)}
+html[data-site="pipe"] .seg button[aria-pressed="true"]{box-shadow:3px 3px 0 var(--accent)}
+html[data-site="pipe"] .cta{border:2px solid var(--ink)!important;border-radius:12px!important;box-shadow:3px 3px 0 var(--ink)!important;letter-spacing:.04em;font-weight:700}
+html[data-site="pipe"] .seg button:active,html[data-site="pipe"] .row button:active,html[data-site="pipe"] .ghost:active,html[data-site="pipe"] .navrow button:active,html[data-site="pipe"] .cta:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)!important}
+html[data-site="pipe"] .steplist button{border-radius:10px}
+html[data-site="pipe"] .steplist .n{border-radius:8px}
+html[data-site="pipe"] .steplist button[aria-current="step"]{box-shadow:inset 0 0 0 2px var(--accent)}
+html[data-site="pipe"] .howto{border-radius:10px}
+html[data-site="pipe"] .libhead h2{font-weight:700;font-size:32px;letter-spacing:.04em}
+html[data-site="pipe"] .lib-group h3{font-weight:700;font-size:22px}
+html[data-site="pipe"] .lib-group h3::before{content:"";width:14px;height:14px;border-radius:4px;background:var(--accent);align-self:center;transform:rotate(12deg)}
+html[data-site="pipe"] .cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+html[data-site="pipe"] .card{border:2px solid var(--ink);border-radius:14px;padding:12px 10px;align-items:center;text-align:center}
+html[data-site="pipe"] .card:hover{transform:translate(-2px,-2px) rotate(-1deg)}
+html[data-site="pipe"] .card .th{width:100%;border-radius:50%;border:2px solid var(--ink)}
+html[data-site="pipe"] .card b{font-weight:700;font-size:21px}
+html[data-site="pipe"] .card[aria-current="true"]{border-color:var(--accent);box-shadow:4px 4px 0 var(--accent)}
+html[data-site="pipe"] .fsnav button{border-radius:12px}
+html[data-site="pipe"] .toast{border-radius:12px}
+@media (max-width:920px){
+  html[data-site="pipe"] .brand{flex:1 1 180px}
+  html[data-site="pipe"] header.top{padding:12px 14px}
+  html[data-site="pipe"] .mbar button{min-width:76px;padding:4px 10px}
+  html[data-site="pipe"] .mbar{border-top:2px solid var(--ink)}
+  html[data-site="pipe"] .mbar button{border:2px solid var(--ink);border-radius:12px}
+  html[data-site="pipe"] .mbar #mNext{border-color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+  html[data-site="pipe"] .mbar .mid{border:none}
+  html[data-site="pipe"] .mbar .mid b{font-weight:700}
+}
+@media (min-width:1081px){
+  html[data-site="pipe"] .work{grid-template-columns:372px minmax(0,1fr) 232px;grid-template-areas:"head head head" "side stage rail" "extras extras extras"}
+}
 </style>
 
 <div class="bunting" id="bunting" aria-hidden="true"></div>
@@ -1051,8 +1108,9 @@ let LD = null, lessonSteps = [], loadSeq = 0;
 let busy = false, animToken = 0, recording = false, caption = null, hudMsg = null;
 let V = null;
 const stage = $('#stage'), sctx = stage.getContext('2d');
-let dpr = 1; const TK = {};
-function readTokens(){ const cs = getComputedStyle(document.documentElement); for (const k of ['mat','mat-line','mat-line-strong']) TK[k] = cs.getPropertyValue('--'+k).trim(); }
+document.documentElement.dataset.site = ONLY || 'both';
+let dpr = 1; const TK = {}, ACC = () => TK.accent || '#a8644b';
+function readTokens(){ const cs = getComputedStyle(document.documentElement); for (const k of ['mat','mat-line','mat-line-strong','accent']) TK[k] = cs.getPropertyValue('--'+k).trim(); }
 const unitList = u => u === 'weave' ? WEAVE : PIPE;
 const curLes = () => S.lesson < 0 ? S.custom : unitList(S.unit)[S.lesson];
 const unitName = u => u === 'weave' ? '紙盤編織' : '毛根造型';
@@ -1514,7 +1572,7 @@ function sparkle(ctx, cx, cy, R, t){ const rng = RNG(7);
     const ph = clamp(t*2 - i/16, 0, 1); if (ph <= 0) continue; const s = (9 + rng()*12)*Math.sin(ph*Math.PI*.5+.2);
     ctx.save(); ctx.fillStyle = ['#f0dcae','#ffffff','#d9bb7c','#e3b8a8'][i%4]; ctx.beginPath();
     for (let k=0;k<8;k++){ const aa = k*Math.PI/4, rr = k%2 ? s*.4 : s; k ? ctx.lineTo(x+Math.cos(aa)*rr, y+Math.sin(aa)*rr) : ctx.moveTo(x+Math.cos(aa)*rr, y+Math.sin(aa)*rr); } ctx.closePath(); ctx.fill(); ctx.restore(); }
-  ctx.save(); ctx.globalAlpha = clamp(t*1.6,0,1); pill(ctx, '完成！', 500, 930 - 40*easeOut(clamp(t*1.4,0,1)) + 40, 44, '#a8644b'); ctx.restore();
+  ctx.save(); ctx.globalAlpha = clamp(t*1.6,0,1); pill(ctx, '完成！', 500, 930 - 40*easeOut(clamp(t*1.4,0,1)) + 40, 44, ACC()); ctx.restore();
 }
 function drawKnotInset(ctx, t, c1, c2){
   const cx = 790, cy = 250, R = 128, a = clamp(t*4, 0, 1)*clamp((1-t)*10, 0, 1);
@@ -1552,7 +1610,7 @@ function render(){
     ctx.setTransform(T.s,0,0,T.s,T.ox,T.oy);
     const ws = (x, y, h=HN + .3) => proj3(x, h, y, KIT.g), bottom = Math.min(905, proj3(0, 0, PR + 1.2, null)[1] + 30);
     if (V.badgeA > 0) drawNotchBadges(ctx, KIT, V.badgeA, V.cutF);
-    if (V.tmplA > 0 && V.markT > .3) pill(ctx, `${LD.N} 個記號・每格 360° ÷ ${LD.N} ≈ ${LD.deg}°`, 500, bottom, 26, '#a8644b');
+    if (V.tmplA > 0 && V.markT > .3) pill(ctx, `${LD.N} 個記號・每格 360° ÷ ${LD.N} ≈ ${LD.deg}°`, 500, bottom, 26, ACC());
     if (V.stype === 'cut' && busy) pill(ctx, `剪缺口：${Math.min(LD.N, Math.floor(V.cutF + .3))} / ${LD.N}`, 500, 70, 30);
     if (V.stype === 'gather' && busy && V.warpT >= 1 && V.cinch > 0 && V.cinch < 1){ const rw = lerp(LD.starR + .4, .4, ease(V.cinch)), e = Math.sin(V.cinch*Math.PI);
       ctx.save(); ctx.globalAlpha = Math.min(1, e*2);
@@ -1564,7 +1622,7 @@ function render(){
     if (V.stype === 'warp' && busy && !V.gLabel && V.warpT > 0 && V.warpT < LD.wrapAt){ const tp = warpTip(LD, V.warpT);
       if (tp.type === 'front') pill(ctx, '直直拉到對面的缺口', 500, 905, 26, 'rgba(20,30,25,.8)');
       else if (tp.type === 'back') pill(ctx, '在背面移到隔壁的缺口（紙盤先變透明給你看）', 500, 905, 26, '#6b8ea8'); }
-    if (V.gLabel && busy) pill(ctx, V.gLabel, 500, 905, 28, '#a8644b');
+    if (V.gLabel && busy) pill(ctx, V.gLabel, 500, 905, 28, ACC());
     if (V.wActive && V.wt > 0){
       const big = lessonSteps[S.lstep] && lessonSteps[S.lstep].ta === 0 && V.wt < TAU*3, win = LD.dA*1.6;
       for (let i=LD.cross.length-1;i>=0;i--){ const c = LD.cross[i]; if (c.t > V.wt) continue; if (V.wt - c.t > win) break;
@@ -1584,7 +1642,7 @@ function render(){
       if (LD.les.extra){ ctx.save(); ctx.globalAlpha = V.prepT; pill(ctx, '另外準備：' + LD.les.extra.join('、'), 500, 880, 22); ctx.restore(); } }
     for (const m_ of f.marks){ const p = at(m_.cl, m_.s); if (!p) continue;
       ctx.save(); ctx.globalAlpha = (V.A === V.B ? 1 : clamp(V.t*2, 0, 1)); ctx.fillStyle='#f0dcae'; ctx.strokeStyle='#3b2b2b'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p[0],p[1],10,0,TAU); ctx.fill(); ctx.stroke();
-      pill(ctx, m_.text, p[0], p[1] - 46, 24, '#a8644b'); ctx.restore(); }
+      pill(ctx, m_.text, p[0], p[1] - 46, 24, ACC()); ctx.restore(); }
     for (const tw of f.twists){ if (tw.step !== V.B || V.A === V.B || tw.a <= 0) continue;
       const p = tw.cl !== undefined ? at(tw.cl, tw.s) : proj3(tw.x, .6, tw.y, null); if (!p) continue;
       ctx.save(); ctx.globalAlpha = clamp(tw.a*2, 0, 1); pill(ctx, '扭 2 圈', p[0], p[1] + 62, 24, '#b0884a'); ctx.restore(); }
