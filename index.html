@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="毛根造型 6 課 3D 步驟動畫：愛心、螺旋棒棒糖、小花、蝴蝶、小狗、聖誕花圈，彎、繞、扭、捲螺旋一步一步示範，附實際大小 A4 形狀模板。">
+<meta name="description" content="毛根造型 20 種 3D 步驟動畫：愛心、星星、小魚、兔子、小狗、太陽、聖誕花圈等，彎、繞、扭、捲螺旋一步一步示範，附實際大小 A4 形狀模板。">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
@@ -513,8 +513,23 @@ const asIs = P => ({pts:P, map:(x,y) => [x,y], k:1});
 const fracAt = (sh, [x,y]) => { let best = 0, bd = 1e9; sh.pts.forEach((p,i) => { const d = Math.hypot(p[0]-x, p[1]-y); if (d < bd){ bd = d; best = i; } }); return best/(sh.pts.length-1); };
 
 const WR = 4.4;
+/* 造型用的小工具 */
+const arcP = (cx, cy, r, a0, a1, n=40) => { const P = []; for (let i=0;i<=n;i++){ const a = (a0 + (a1-a0)*i/n)*D2R; P.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r]); } return P; };
+const chain = V => join(...V.slice(1).map((p, i) => linePts(V[i][0], V[i][1], p[0], p[1])));
+const qc = (x0, y0, cx, cy, x1, y1, n=30) => { const P = []; for (let i=0;i<=n;i++){ const t = i/n, m = 1-t; P.push([m*m*x0 + 2*m*t*cx + t*t*x1, m*m*y0 + 2*m*t*cy + t*t*y1]); } return P; };
+/* 一段一段組成的造型：cut[i] = 做完第 i 段時，毛根用掉的比例（步驟就照這個一段一段彎） */
+function parts(L, list, o, tr){ const sh = L ? fitL(join(...list), L, o, tr) : asIs(join(...list)); const tot = list.reduce((a, p) => a + plen(p), 0); let acc = 0; sh.cut = list.map(p => (acc += plen(p))/tot); return sh; }
+function splitN(P, n){ const out = []; for (let k=0;k<n;k++) out.push(P.slice(Math.floor(k*(P.length-1)/n), Math.floor((k+1)*(P.length-1)/n) + 1)); return out; }
+function starParts(cx, cy, R, r){ const v = i => { const [x, y] = pol((90 + 36*i)*D2R, i%2 ? R : r); return [cx + x, cy + y]; }, P = [linePts(cx - .3, cy + r + 1.3, ...v(0))];
+  for (let i=0;i<10;i+=2) P.push(chain([v(i), v(i+1), v(i+2)])); P.push(linePts(...v(10), cx + .3, cy + r + 1.3)); return P; }
+function bumpP(p, q, cx, cy){ const mx = (p[0]+q[0])/2, my = (p[1]+q[1])/2, r = Math.hypot(q[0]-p[0], q[1]-p[1])/2, a0 = Math.atan2(p[1]-my, p[0]-mx);
+  const s = Math.hypot(mx + Math.cos(a0 + Math.PI/2)*r - cx, my + Math.sin(a0 + Math.PI/2)*r - cy) > Math.hypot(mx + Math.cos(a0 - Math.PI/2)*r - cx, my + Math.sin(a0 - Math.PI/2)*r - cy) ? 1 : -1, P = [];
+  for (let i=0;i<=24;i++){ const a = a0 + s*Math.PI*i/24; P.push([mx + Math.cos(a)*r, my + Math.sin(a)*r]); } return P; }
+const P2 = p => ({x:p[0], y:p[1]});
+
 const PIPE = [
-  {name:'愛心', level:1, theme:'入門・彎和扭', cleaners:[{c:'pink', txt:'1 根（30 公分）'}],
+  /* ---------------- ★ ---------------- */
+  {name:'愛心', level:1, theme:'彎和扭', cleaners:[{c:'pink', txt:'1 根（30 公分）'}],
    tip:'彎圓弧時用大拇指頂住內側慢慢推，弧線會比較圓。做好可以當書籤或戒指裝飾。',
    shapes(){ const hx = t => 16*Math.pow(Math.sin(t),3), hy = t => -(13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)), raw = [];
      for (let i=0;i<=8;i++) raw.push([-.8, 22 - 5*i/8]);
@@ -525,87 +540,298 @@ const PIPE = [
      const V = asIs(join(linePts(dx + 15*Math.cos(-125*D2R), dy + 15*Math.sin(-125*D2R), dx, dy, 60), linePts(dx, dy, dx + 15*Math.cos(-55*D2R), dy + 15*Math.sin(-55*D2R), 60)));
      return {heart, V}; },
    steps:[
-    {title:'對摺找中點', text:'拿一根粉紅色毛根，兩端對齊對摺，在中間捏出一個小折痕，再打開成 V 字形。', tip:'這個小凹就是愛心上面中間凹下去的地方。', set:{0:{sh:'V', mode:'morph'}}, marks:[{cl:0, s:.5, text:'中點'}]},
+    {title:'對摺找中點', text:'拿一根粉紅色毛根，兩端對齊對摺，在中間捏出一個小折痕，再打開成 V 字形。', tip:'這個小折痕就是愛心上面中間凹下去的地方。', set:{0:{sh:'V', mode:'morph'}}, marks:[{cl:0, s:.5, text:'中點'}]},
     {title:'兩邊彎成圓弧', text:'從中點開始，左右兩邊各往外、往下彎成大大的圓弧，兩個尾端在下面交叉。', tip:'兩邊一起彎，比較容易對稱。', set:{0:{sh:'heart', mode:'form', from:'mid'}}},
-    {title:'尾端扭兩圈固定', text:'兩個尾端交叉的地方捏住，互相扭轉 2 圈，愛心就固定了。多出來的尾巴往後折。', tip:'扭的時候一手捏住愛心尖端，另一手轉，不要整個愛心一起轉。', twists:[{sh:'heart', x:0, y:19.5, ang:90, len:5}]}
+    {title:'尾端扭兩圈固定', text:'兩個尾端交叉的地方捏住，互相扭轉 2 圈，愛心就固定了。', tip:'一手捏住愛心尖端，另一手轉，不要整個愛心一起轉。', twists:[{sh:'heart', x:0, y:19.5, ang:90, len:5}]}
    ], done:'整理一下兩邊的圓弧，讓愛心左右一樣大，就完成了！可以貼在卡片上或綁在禮物上。'},
+
+  {name:'拐杖糖', level:1, theme:'扭麻花・彎鉤', cleaners:[{pair:['red','white'], txt:'紅、白各半根（15 公分）'}],
+   tip:'聖誕節可以做很多支掛在樹上。兩根的頭要對齊再扭，條紋才會平均。',
+   shapes(){ return {cane: parts(0, [linePts(0, 6, 0, -3.4), arcP(1.5, -3.4, 1.5, 180, 360, 30), linePts(3, -3.4, 3, -2.4)])}; },
+   steps:[
+    {title:'一端扭在一起', text:'紅色和白色毛根並排，把一端對齊捏住，互相扭轉 2 圈固定。', tip:'先固定一端，等一下整根才扭得動。', twists:[{cl:0, s:.012, len:.9}], marks:[{cl:0, s:.02, text:'從這端開始'}]},
+    {title:'整根扭成紅白麻花', text:'一手捏住扭好的那端，另一手捏住另一端，往同一個方向一直轉，轉到整根都是紅白相間的條紋。', tip:'轉幾圈就停一下，看看條紋是不是平均。', set:{0:{tw:1}}},
+    {title:'把麻花擺直', text:'把扭好的麻花拉直、立起來，下面是拐杖的底。', set:{0:{sh:'cane', mode:'morph', from:'start', f:SH => SH.cane.cut[0]}}},
+    {title:'上面彎成鉤子', text:'從上面算下來大約三分之一的地方，往旁邊彎一個圓圓的鉤子，尾端朝下。', tip:'繞著一支麥克筆彎，鉤子會很圓。', set:{0:{sh:'cane', mode:'form', from:'start'}}}
+   ], done:'拐杖糖完成了！可以掛在聖誕樹上，或綁在禮物袋口。'},
+
   {name:'螺旋棒棒糖', level:1, theme:'扭麻花・捲螺旋', cleaners:[{pair:['red','white'], txt:'紅、白各 1 根'}],
    tip:'捲螺旋時用鉛筆當中心軸，捲好再抽出鉛筆，螺旋會很整齊。',
    shapes(){ const sp = spiralPts(0, 0, 1.0, 22.5, 90, .2), e = sp[sp.length-1], p = sp[sp.length-2], h = Math.atan2(e[1]-p[1], e[0]-p[0]);
      const bend = []; for (let i=1;i<=12;i++){ const hh = lerpAng(h, Math.PI/2, i/12); const last = bend.length ? bend[bend.length-1] : e; bend.push([last[0] + Math.cos(hh)*.08, last[1] + Math.sin(hh)*.08]); }
-     const b = bend[bend.length-1], lolly = asIs(join(sp, [e, ...bend], linePts(b[0], b[1], b[0], b[1] + 6.5)));
-     lolly.frac = plen(sp)/plen(lolly.pts); return {lolly}; },
+     const b = bend[bend.length-1], sp3 = splitN(sp, 3); return {lolly: parts(0, [sp3[0], sp3[1], sp3[2], join([e, ...bend], linePts(b[0], b[1], b[0], b[1] + 6.5))])}; },
    steps:[
-    {title:'一端扭在一起', text:'紅色和白色毛根並排，在一端捏齊，扭轉 2 圈固定在一起。', tip:'捏的地方要齊，等一下才扭得漂亮。', twists:[{cl:0, s:.012, len:.9}], marks:[{cl:0, s:.02, text:'從這端開始'}]},
+    {title:'一端扭在一起', text:'紅色和白色毛根並排，在一端捏齊，互相扭轉 2 圈固定在一起。', tip:'捏的地方要齊，等一下才扭得漂亮。', twists:[{cl:0, s:.012, len:.9}], marks:[{cl:0, s:.02, text:'從這端開始'}]},
     {title:'整根扭成紅白麻花', text:'一手捏住扭好的那端，另一手捏住另一端，往同一個方向一直轉，兩根就會扭成紅白相間的麻花。', tip:'轉幾圈就停一下，看看紅白條紋是不是平均。', set:{0:{tw:1}}},
-    {title:'從一端捲成螺旋', text:'從扭好的那端開始，像捲蚊香一樣一圈一圈往外捲，捲 2 圈半左右，留下一段不要捲。', tip:'可以先繞在鉛筆上起頭，捲到一半再抽掉鉛筆。', set:{0:{sh:'lolly', mode:'form', from:'start', f:SH => SH.lolly.frac}}},
+    {title:'從一端捲第一圈', text:'從扭好的那端開始，往內彎一個小小的圈，這是螺旋的中心。', tip:'可以先繞在鉛筆上起頭。', set:{0:{sh:'lolly', mode:'form', from:'start', f:SH => SH.lolly.cut[0]}}},
+    {title:'一圈一圈往外捲', text:'貼著剛剛的小圈，像捲蚊香一樣一圈一圈往外捲，捲到大約兩圈半，後面留一段不要捲。', tip:'每一圈都要貼緊前一圈。', set:{0:{sh:'lolly', mode:'form', from:'start', f:SH => SH.lolly.cut[2]}}},
     {title:'剩下的往下彎成棒子', text:'把剩下的一段往下彎，拉直就是棒棒糖的棒子。', tip:'也可以把棒子插進吸管裡，比較好拿。', set:{0:{sh:'lolly', mode:'form', from:'start'}}}
    ], done:'螺旋棒棒糖完成了！可以綁上小緞帶，插在花盆裡當裝飾。'},
+
+  {name:'星星', level:1, theme:'折尖角', cleaners:[{c:'yellow', txt:'1 根（30 公分）'}],
+   tip:'開始前先把毛根對摺、再對摺，折出記號，每一小段一樣長，星星的角才會一樣大。',
+   shapes(){ return {star: parts(30, starParts(0, 0, 3.9, 1.6))}; },
+   steps:[
+    {title:'折出第一個尖角', text:'毛根的一端先留 1 公分。從這裡斜斜往外拉出一小段，再折回來，就是第一個尖角。', tip:'折的地方用指甲壓一下，角會很尖。', set:{0:{sh:'star', mode:'form', from:'start', f:SH => SH.star.cut[1]}}, marks:[{cl:0, s:0, text:'起點留 1 公分'}]},
+    {title:'再折兩個尖角', text:'照同樣的長度，往外、折回來，往外、折回來，再做兩個尖角。現在有三個角了。', tip:'每一段大約 3 公分，用手指比一比。', set:{0:{sh:'star', mode:'form', from:'start', f:SH => SH.star.cut[3]}}},
+    {title:'折完五個尖角', text:'再折兩個尖角，一共五個，最後回到一開始的起點旁邊。', set:{0:{sh:'star', mode:'form', from:'start'}}},
+    {title:'頭尾扭在一起', text:'起點留的 1 公分和最後的尾端並在一起，互相扭 2 圈固定。', tip:'扭好以後把五個角拉一拉、調成一樣大。', twists:[{sh:'star', x:0, y:2.3, ang:90, len:1.3}]}
+   ], done:'星星完成了！可以綁一條線掛起來，或貼在卡片上。'},
+
+  {name:'雲朵', level:1, theme:'彎圓弧', cleaners:[{c:'sky', txt:'1 根（30 公分）'}],
+   tip:'圓弧可以繞著大拇指彎，每一朵大小不一樣也沒關係，雲本來就不規則。',
+   shapes(){ const A = [[3.6,1.6],[2.7,-.5],[.9,-1.7],[-1.3,-1.6],[-2.9,-.4],[-3.6,1.6]], list = [linePts(-3.6, 1.6, 3.6, 1.6)];
+     for (let i=0;i<5;i++) list.push(bumpP(A[i], A[i+1], 0, .4)); list.push(linePts(-3.6, 1.6, -2.5, 1.6)); return {cloud: parts(30, list)}; },
+   steps:[
+    {title:'底邊拉直', text:'毛根從一端開始，先留一段直直的當雲的底邊，大約一個手掌寬。', set:{0:{sh:'cloud', mode:'form', from:'start', f:SH => SH.cloud.cut[0]}}, marks:[{cl:0, s:0, text:'起點'}]},
+    {title:'彎第一朵圓弧', text:'在底邊的右邊尾端往上彎，繞出一個圓圓的弧。', tip:'繞著大拇指彎最順。', set:{0:{sh:'cloud', mode:'form', from:'start', f:SH => SH.cloud.cut[1]}}},
+    {title:'再彎兩朵', text:'接著往左上方再彎兩個圓弧，中間那朵最大。', set:{0:{sh:'cloud', mode:'form', from:'start', f:SH => SH.cloud.cut[3]}}},
+    {title:'最後兩朵，回到起點', text:'再彎兩個圓弧往左下走，回到底邊的起點。', set:{0:{sh:'cloud', mode:'form', from:'start'}}},
+    {title:'頭尾扭在一起', text:'尾端和起點重疊一小段，互相扭 2 圈固定。', twists:[{sh:'cloud', x:-3.05, y:1.6, ang:0, len:1.1}]}
+   ], done:'雲朵完成了！可以在下面綁幾條藍色毛線當雨滴。'},
+
+  {name:'眼鏡', level:1, theme:'繞圓圈', cleaners:[{c:'blue', txt:'1 根（30 公分）'}],
+   tip:'鏡框繞在瓶蓋或粗麥克筆上，兩個圓圈會一樣大又很圓。這是玩具小眼鏡，可以給玩偶戴。',
+   shapes(){ return {gl: parts(30, [linePts(-7.2, 0, -3.5, 0), arcP(-2.35, 0, 1.15, 180, 720, 70), linePts(-1.2, 0, 1.2, 0), arcP(2.35, 0, 1.15, 180, 720, 70), linePts(3.5, 0, 7.2, 0)])}; },
+   steps:[
+    {title:'左邊留一段當鏡腳', text:'毛根的一端先留大約 4 公分直直的，這是左邊的鏡腳。', set:{0:{sh:'gl', mode:'form', from:'start', f:SH => SH.gl.cut[0]}}, marks:[{cl:0, s:0, text:'起點'}]},
+    {title:'繞左邊的鏡框', text:'接著繞一個圓圈，繞完一整圈以後再多繞半圈，停在圓圈的右邊。多繞的半圈會讓鏡框比較牢。', tip:'繞在瓶蓋上，再把瓶蓋抽出來。', set:{0:{sh:'gl', mode:'form', from:'start', f:SH => SH.gl.cut[1]}}},
+    {title:'拉一小段當鼻樑', text:'往右拉直大約 2 公分，這是架在鼻子上的鼻樑。', set:{0:{sh:'gl', mode:'form', from:'start', f:SH => SH.gl.cut[2]}}},
+    {title:'繞右邊的鏡框', text:'再繞一個一樣大的圓圈，一樣繞一圈半，停在圓圈的右邊。', tip:'和左邊的圓圈比一比，調成一樣大。', set:{0:{sh:'gl', mode:'form', from:'start', f:SH => SH.gl.cut[3]}}},
+    {title:'剩下的當右邊鏡腳', text:'剩下的一段往右拉直，就是右邊的鏡腳。兩邊鏡腳的尾端往內折一小段，才不會刺到。', set:{0:{sh:'gl', mode:'form', from:'start'}}}
+   ], done:'眼鏡完成了！把兩邊鏡腳往後折，就可以給玩偶戴上。'},
+
+  /* ---------------- ★★ ---------------- */
+  {name:'小魚', level:2, theme:'交叉・扭轉', cleaners:[{c:'orange', txt:'1 根（30 公分）'}], extra:['活動眼睛 1 顆', '白膠'],
+   tip:'魚的肚子和背要一樣圓，可以放在 A4 模板上對著彎。',
+   shapes(){ return {fish: parts(30, [linePts(4.7, -1.7, 2.6, 0), qc(2.6, 0, -.4, -3.3, -3.3, 0), qc(-3.3, 0, -.4, 3.3, 2.6, 0), linePts(2.6, 0, 4.7, 1.7)])}; },
+   steps:[
+    {title:'先留一段當尾巴', text:'毛根的一端斜斜留大約 4 公分，這是魚尾巴的上半邊。', set:{0:{sh:'fish', mode:'form', from:'start', f:SH => SH.fish.cut[0]}}, marks:[{cl:0, s:0, text:'起點'}]},
+    {title:'彎出魚背', text:'從尾巴根部開始，往前彎一個大大的弧到魚嘴，這是魚的背。', set:{0:{sh:'fish', mode:'form', from:'start', f:SH => SH.fish.cut[1]}}},
+    {title:'彎出魚肚子', text:'在魚嘴的地方轉彎，往回彎一個一樣大的弧，回到尾巴根部。', tip:'魚嘴的地方捏尖一點。', set:{0:{sh:'fish', mode:'form', from:'start', f:SH => SH.fish.cut[2]}}},
+    {title:'交叉，做另一半尾巴', text:'在尾巴根部和一開始留的那段交叉，剩下的斜斜往外，就是尾巴的下半邊。', set:{0:{sh:'fish', mode:'form', from:'start'}}},
+    {title:'交叉的地方扭一圈', text:'把尾巴根部交叉的兩段互相扭 1～2 圈，魚的身體就固定了。', twists:[{sh:'fish', x:2.6, y:0, ang:0, len:.9}]},
+    {title:'貼上眼睛', text:'在魚頭的位置點一點白膠，貼上活動眼睛。', deco:SH => [{type:'eye', ...P2(SH.fish.map(-1.9, -.5)), r:.34}]}
+   ], done:'小魚完成了！多做幾隻不同顏色的，綁在線上就是魚兒吊飾。'},
+
   {name:'小花', level:2, theme:'繞圈・三根組合', cleaners:[{c:'pink', txt:'1 根（花瓣）'}, {c:'yellow', txt:'1 小段約 6 公分（花心）', z:2}, {c:'green', txt:'1 根剪成 20 公分（花莖和葉子）', z:-1}],
    tip:'花瓣可以繞在兩根手指上彎，每一片大小會比較一樣。',
    shapes(){ const raw = []; for (let k=0;k<5;k++) raw.push(loopPts(0, 0, -90 + k*72, 3, 1.15, 50));
-     const petals = fitL(join(...raw), 30), center = asIs(spiralPts(0, 0, .5, 6, -30, .12));
-     const s1 = linePts(0, .1, 0, 5), l1 = loopPts(0, 5, -40, 2.9, 1.0, 50), s2 = linePts(0, 5, 0, 6.8), l2 = loopPts(0, 6.8, 220, 2.9, 1.0, 50), s3 = linePts(0, 6.8, 0, 10);
-     const stem = fitL(join(s1, l1, s2, l2, s3), 20, [0,0]); stem.f1 = fracAt(stem, stem.map(0, 5)) - .005;
+     const petals = parts(30, raw), center = parts(0, splitN(spiralPts(0, 0, .5, 6, -30, .12), 2));
+     const stem = parts(20, [linePts(0, .1, 0, 5), loopPts(0, 5, -40, 2.9, 1.0, 50), linePts(0, 5, 0, 6.8), loopPts(0, 6.8, 220, 2.9, 1.0, 50), linePts(0, 6.8, 0, 10)], [0,0]);
      return {petals, center, stem}; },
    steps:[
-    {title:'彎出第一片花瓣', text:'粉紅色毛根的一端放在中心，往外彎出一個圓圓的花瓣，再繞回中心。', tip:'繞在食指和中指上彎，花瓣就會圓。', set:{0:{sh:'petals', mode:'form', from:'start', f:.205}}},
-    {title:'依序彎出 5 片花瓣', text:'每彎好一片就在中心捏一下，轉一個方向再彎下一片，一共 5 片。最後兩個尾端在中心扭在一起。', tip:'一邊彎一邊數「1、2、3、4、5」。', set:{0:{sh:'petals', mode:'form', from:'start'}}, twists:[{x:0, y:0, ang:20, len:.8, c:['pink','pink']}]},
-    {title:'黃色捲成花心', text:'黃色的小段毛根從一端開始，一圈一圈捲成小螺旋，放在花的正中間壓好。', tip:'捲不緊沒關係，可以用白膠黏在中心。', set:{1:{sh:'center', mode:'form', from:'start'}}},
-    {title:'綠色毛根當花莖', text:'綠色毛根的一端穿過花心後面，扭兩圈固定，往下拉直當花莖。', tip:'花莖扭在花瓣後面，從前面看不到。', set:{2:{sh:'stem', mode:'form', from:'start', f:SH => SH.stem.f1}}},
-    {title:'繞出兩片葉子', text:'在花莖中間往右上彎出一片葉子、繞回花莖；往下一點再往左上彎出另一片。', tip:'葉子尖尖的，彎的時候在尖端捏一下。', set:{2:{sh:'stem', mode:'form', from:'start'}}}
+    {title:'彎出第一片花瓣', text:'粉紅色毛根的一端放在中心，往外彎出一個圓圓的圈，再繞回中心捏住。這是第一片花瓣。', tip:'繞在食指和中指上彎，花瓣就會圓。', set:{0:{sh:'petals', mode:'form', from:'start', f:SH => SH.petals.cut[0]}}, marks:[{cl:0, s:0, text:'起點在中心'}]},
+    {title:'再彎第二、三片', text:'轉一個方向，一樣往外繞一圈回到中心，做第二片；再轉、再繞，做第三片。每做完一片都在中心捏一下。', tip:'一邊彎一邊數「1、2、3」。', set:{0:{sh:'petals', mode:'form', from:'start', f:SH => SH.petals.cut[2]}}},
+    {title:'彎第四、五片', text:'繼續做第四、第五片，五片花瓣圍成一圈，尾端也回到中心。', set:{0:{sh:'petals', mode:'form', from:'start'}}},
+    {title:'花瓣的頭尾扭在一起', text:'起點和尾端在中心碰在一起，互相扭 2 圈，花瓣就不會散開。', twists:[{x:0, y:0, ang:20, len:.8, c:['pink','pink']}]},
+    {title:'拿出黃色的小段', text:'現在做花心。拿出剪好的黃色小段毛根（大約 6 公分），先放在花的旁邊。', park:{1:[5.5, 0]}},
+    {title:'黃色從一端捲第一圈', text:'黃色毛根從一端開始，往內彎一個很小的圈。', tip:'繞在鉛筆尖上起頭，比較好捲。', set:{1:{sh:'center', at:[5.5, 0], mode:'form', from:'start', f:SH => SH.center.cut[0]}}},
+    {title:'捲成小螺旋', text:'貼著剛剛的小圈繼續捲，把整段捲成一個小螺旋，像一顆扁扁的圓鈕扣。', set:{1:{sh:'center', at:[5.5, 0], mode:'form', from:'start'}}},
+    {title:'把花心放到花的正中間', text:'把捲好的黃色螺旋放到五片花瓣的正中間，蓋住剛剛扭起來的地方，用白膠黏住。', tip:'沒有白膠的話，把黃色的尾端從花瓣中間穿到後面再折起來。', set:{1:{sh:'center', mode:'morph', from:'start'}}},
+    {title:'拿出綠色毛根', text:'接著做花莖。拿出綠色毛根（20 公分），先放在花的下面。', park:{2:true}},
+    {title:'綠色的一端固定在花心後面', text:'綠色毛根的一端從花的後面穿到中心，繞著花瓣扭在一起的地方扭 2 圈固定，其餘的往下拉直。', tip:'花莖扭在花的背面，從前面看不到。', set:{2:{sh:'stem', mode:'morph', from:'start', f:0}}, twists:[{x:0, y:.35, ang:90, len:.8, c:['green','green']}], marks:[{cl:2, s:0, text:'這一端在花心後面'}]},
+    {title:'彎第一片葉子', text:'在花莖中間的位置，往右上繞出一個尖尖的圈，再繞回花莖，這是第一片葉子。', tip:'葉子的尖端捏一下。', set:{2:{sh:'stem', mode:'form', from:'start', f:SH => SH.stem.cut[1]}}},
+    {title:'彎第二片葉子', text:'往下一點點，往左上再繞一個圈回到花莖，這是第二片葉子。', set:{2:{sh:'stem', mode:'form', from:'start', f:SH => SH.stem.cut[3]}}},
+    {title:'剩下的拉直當花莖', text:'剩下的一段往下拉直，就是花莖。', set:{2:{sh:'stem', mode:'form', from:'start'}}}
    ], done:'一朵小花完成了！做好幾朵綁在一起，就是一束送給家人的花。'},
+
   {name:'蝴蝶', level:2, theme:'對稱・繞圈組合', cleaners:[{c:'purple', txt:'1 根（翅膀）'}, {c:'black', txt:'半根約 15 公分（身體和觸角）'}],
    tip:'上面的翅膀大、下面的小。左右做完放在桌上比一比，再調整成對稱。',
-   shapes(){ const loops = [[-128, 4.3, 2.2], [150, 2.9, 1.5], [30, 2.9, 1.5], [-52, 4.3, 2.2]], raw = loops.map(([a,A,B]) => loopPts(0, 0, a, A, B, 56));
-     const wings = fitL(join(...raw), 30); const L0 = plen(raw[0]), L1 = plen(raw[1]), tot = L0*2 + L1*2; wings.f = [L0/tot, (L0+L1)/tot];
-     const body = curl => { const half = []; const hx = -.2, hy = -1.0, ax = -1.35, ay = -3.1, dx = ax-hx, dy = ay-hy, dl = Math.hypot(dx,dy);
-       let ant; if (curl){ const c = spiralPts(0, 0, .28, 1.1, 0, .05); const e = c[c.length-1]; const ang = Math.atan2(dy,dx) + Math.PI, rot = ([x,y]) => { const ca = Math.cos(ang-Math.PI/2), sa = Math.sin(ang-Math.PI/2); return [ax + (x-e[0])*ca - (y-e[1])*sa, ay + (x-e[0])*sa + (y-e[1])*ca]; };
-           ant = c.map(rot); }
-       else { const L = 1.1; ant = linePts(ax + dx/dl*L, ay + dy/dl*L, ax, ay, 10); }
-       half.push(...join(ant, linePts(ax, ay, hx, hy, 24), linePts(hx, hy, hx, 1.9, 24)));
+   shapes(){ const loops = [[-128, 4.3, 2.2], [150, 2.9, 1.5], [30, 2.9, 1.5], [-52, 4.3, 2.2]], wings = parts(30, loops.map(([a,A,B]) => loopPts(0, 0, a, A, B, 56)));
+     const body = () => { const half = [], hx = -.2, hy = -1.0, ax = -1.35, ay = -3.1, dx = ax-hx, dy = ay-hy;
+       const c = spiralPts(0, 0, .28, 1.1, 0, .05), e = c[c.length-1], ang = Math.atan2(dy,dx) + Math.PI, rot = ([x,y]) => { const ca = Math.cos(ang-Math.PI/2), sa = Math.sin(ang-Math.PI/2); return [ax + (x-e[0])*ca - (y-e[1])*sa, ay + (x-e[0])*sa + (y-e[1])*ca]; };
+       half.push(...join(c.map(rot), linePts(ax, ay, hx, hy, 24), linePts(hx, hy, hx, 1.9, 24)));
        const u = []; for (let i=1;i<12;i++){ const q = Math.PI - Math.PI*i/12; u.push([Math.cos(q)*.2, 1.9 + Math.sin(q)*.2]); }
-       const right = half.slice().reverse().map(([x,y]) => [-x, y]); return asIs([...half, ...u, ...right]); };
+       return asIs([...half, ...u, ...half.slice().reverse().map(([x,y]) => [-x, y])]); };
      const hu = linePts(-.2, 1.9 - 6.4, -.2, 1.9, 60), uu = []; for (let i=1;i<12;i++){ const q = Math.PI - Math.PI*i/12; uu.push([Math.cos(q)*.2, 1.9 + Math.sin(q)*.2]); }
-     const bodyU = asIs([...hu, ...uu, ...hu.slice().reverse().map(([x,y]) => [-x, y])]);
-     return {wings, bodyU, bodyC: body(true)}; },
+     return {wings, bodyU: asIs([...hu, ...uu, ...hu.slice().reverse().map(([x,y]) => [-x, y])]), bodyC: body()}; },
    steps:[
-    {title:'彎出左上的大翅膀', text:'紫色毛根的一端放在中心，往左上彎出一個大圓圈，再繞回中心。', tip:'大翅膀大約和手掌心一樣大。', set:{0:{sh:'wings', mode:'form', from:'start', f:SH => SH.wings.f[0]}}},
-    {title:'彎出左下的小翅膀', text:'在中心捏住，往左下彎出一個比較小的圓圈，繞回中心。', set:{0:{sh:'wings', mode:'form', from:'start', f:SH => SH.wings.f[1]}}},
-    {title:'右邊也一樣', text:'在中心交叉過去，右邊先彎小翅膀、再彎大翅膀，最後回到中心。', tip:'和左邊對照著做，左右才會一樣大。', set:{0:{sh:'wings', mode:'form', from:'start'}}},
+    {title:'彎出左上的大翅膀', text:'紫色毛根的一端放在中心，往左上彎出一個大圓圈，再繞回中心捏住。', tip:'大翅膀大約和手掌心一樣大。', set:{0:{sh:'wings', mode:'form', from:'start', f:SH => SH.wings.cut[0]}}, marks:[{cl:0, s:0, text:'起點在中心'}]},
+    {title:'彎出左下的小翅膀', text:'在中心捏住，往左下彎出一個比較小的圓圈，繞回中心。', set:{0:{sh:'wings', mode:'form', from:'start', f:SH => SH.wings.cut[1]}}},
+    {title:'彎出右下的小翅膀', text:'在中心交叉到右邊，往右下彎一個小圓圈，繞回中心。', tip:'和左下的小翅膀一樣大。', set:{0:{sh:'wings', mode:'form', from:'start', f:SH => SH.wings.cut[2]}}},
+    {title:'彎出右上的大翅膀', text:'最後往右上彎一個大圓圈，尾端回到中心。四片翅膀都好了。', set:{0:{sh:'wings', mode:'form', from:'start'}}},
+    {title:'拿出黑色毛根', text:'現在做身體。拿出黑色的半根毛根，先橫放在翅膀下面。', park:{1:true}},
     {title:'黑色毛根對摺，夾住翅膀', text:'黑色毛根從中間對摺成 U 字形。折起來的地方放在翅膀的正下方，兩根黑色一左一右，把翅膀中間交叉的地方夾在裡面。', tip:'先不要扭，確定翅膀的中心有被兩根黑色夾住。', set:{1:{sh:'bodyU', mode:'morph', from:'mid'}}, marks:[{cl:1, s:.5, text:'折點在翅膀下面'}]},
     {title:'兩根黑色一起扭，變成身體', text:'一手捏住下面的折點，另一手把兩根黑色互相扭轉 2 圈，扭到翅膀上方一點點就停。扭好的這一段就是蝴蝶的身體，翅膀也被固定住了。', tip:'上面要留兩段沒有扭的，等一下當觸角。', twists:[{x:0, y:.45, ang:90, len:2.7, c:['black','black']}]},
     {title:'觸角分開、捲小圈', text:'把上面沒有扭的兩段黑色往左右分開，變成 V 字形的觸角，尾端各捲一個小圈圈。', tip:'用指尖捏住尾端，一邊轉一邊捲。', set:{1:{sh:'bodyC', mode:'morph', from:'mid'}}}
    ], done:'蝴蝶完成了！翅膀可以再貼上亮片，或用夾子夾在窗簾上。'},
+
+  {name:'小蛇', level:2, theme:'連續彎曲', cleaners:[{c:'lgreen', txt:'1 根（30 公分）'}], extra:['活動眼睛 2 顆', '白膠'],
+   tip:'彎的時候一上一下，像在畫波浪。每個彎差不多大，蛇看起來才像在爬。',
+   shapes(){ const w = []; for (let i=0;i<=120;i++){ const x = -7 + 10*i/120; w.push([x, 1.1*Math.sin(TAU*(x+7)/3.333)]); }
+     return {snake: parts(30, [...splitN(w, 3), loopPts(3, 0, 0, 2.0, .95, 44)])}; },
+   steps:[
+    {title:'尾巴彎第一個波浪', text:'從毛根的一端開始，先往下彎、再往上彎，做出第一個波浪。這一端是蛇的尾巴。', set:{0:{sh:'snake', mode:'form', from:'start', f:SH => SH.snake.cut[0]}}, marks:[{cl:0, s:0, text:'尾巴'}]},
+    {title:'彎第二個波浪', text:'接著再往下、往上彎一次，和第一個波浪一樣大。', set:{0:{sh:'snake', mode:'form', from:'start', f:SH => SH.snake.cut[1]}}},
+    {title:'彎第三個波浪', text:'再彎一次，蛇的身體就有三個彎了。', set:{0:{sh:'snake', mode:'form', from:'start', f:SH => SH.snake.cut[2]}}},
+    {title:'繞一個圈當蛇頭', text:'剩下的一段往前繞一個橢圓形的圈，繞回脖子的地方，這是蛇的頭。', set:{0:{sh:'snake', mode:'form', from:'start'}}},
+    {title:'脖子扭一圈固定', text:'尾端在脖子的地方繞著身體扭 1～2 圈，頭就不會鬆開。', twists:[{sh:'snake', x:3, y:0, ang:90, len:.8}]},
+    {title:'貼上眼睛', text:'在蛇頭上點白膠，貼兩顆活動眼睛。', deco:SH => [{type:'eye', ...P2(SH.snake.map(4.3, -.42)), r:.24}, {type:'eye', ...P2(SH.snake.map(4.3, .42)), r:.24}]}
+   ], done:'小蛇完成了！把波浪稍微立起來，牠就像在爬一樣。'},
+
+  {name:'幸運草', level:2, theme:'四個圈', cleaners:[{c:'green', txt:'1 根（30 公分）'}],
+   tip:'每一片葉子繞完都回到中心捏一下，四片才會一樣大。',
+   shapes(){ return {clover: parts(30, [...[-135, -45, 45, 135].map(a => loopPts(0, 0, a, 2.5, 1.25, 50)), qc(0, 0, .3, 3, 1.4, 6.2)], [0,0])}; },
+   steps:[
+    {title:'彎第一片葉子', text:'毛根的一端放在中心，往左上繞一個圓圓的圈，回到中心捏住。', set:{0:{sh:'clover', mode:'form', from:'start', f:SH => SH.clover.cut[0]}}, marks:[{cl:0, s:0, text:'起點在中心'}]},
+    {title:'彎第二片葉子', text:'轉到右上，再繞一個一樣大的圈回到中心。', set:{0:{sh:'clover', mode:'form', from:'start', f:SH => SH.clover.cut[1]}}},
+    {title:'彎第三、四片葉子', text:'接著右下、左下各繞一個圈，四片葉子圍成一個十字。', set:{0:{sh:'clover', mode:'form', from:'start', f:SH => SH.clover.cut[3]}}},
+    {title:'中心扭一圈', text:'在中心把起點和現在手上這一段互相扭 1～2 圈，四片葉子就固定了。', twists:[{x:0, y:0, ang:60, len:.8}]},
+    {title:'剩下的當葉柄', text:'剩下的一段往下拉，稍微彎一點，就是幸運草的葉柄。', set:{0:{sh:'clover', mode:'form', from:'start'}}}
+   ], done:'四葉幸運草完成了！送給朋友，祝他幸運。'},
+
+  {name:'兔子', level:2, theme:'圓臉＋長耳朵', cleaners:[{c:'pink', txt:'1 根（30 公分）'}], extra:['活動眼睛 2 顆', '白色小毛球 1 顆', '白膠'],
+   tip:'兩隻耳朵要一樣長。耳朵是細細長長的圈，繞好以後把兩邊壓靠近一點。',
+   shapes(){ const c = [0, .4], r = 2.1, pt = a => [c[0] + Math.cos(a*D2R)*r, c[1] + Math.sin(a*D2R)*r], p = pt(250), q = pt(290);
+     return {bunny: parts(30, [arcP(c[0], c[1], r, 90, 250, 44), loopPts(p[0], p[1], -100, 3.7, .85, 50), arcP(c[0], c[1], r, 250, 290, 12), loopPts(q[0], q[1], -80, 3.7, .85, 50), arcP(c[0], c[1], r, 290, 470, 48)])}; },
+   steps:[
+    {title:'彎左半邊的臉', text:'毛根的一端放在下巴的位置，往左、往上彎一個半圓，到頭頂偏左的地方停住。', set:{0:{sh:'bunny', mode:'form', from:'start', f:SH => SH.bunny.cut[0]}}, marks:[{cl:0, s:0, text:'起點在下巴'}]},
+    {title:'繞出左耳', text:'從頭頂往上繞一個細細長長的圈，再回到頭頂，這是左邊的耳朵。', tip:'耳朵大約一根手指長。', set:{0:{sh:'bunny', mode:'form', from:'start', f:SH => SH.bunny.cut[1]}}},
+    {title:'繞出右耳', text:'沿著頭頂往右走一小段，再往上繞一個一樣長的圈回來，這是右邊的耳朵。', set:{0:{sh:'bunny', mode:'form', from:'start', f:SH => SH.bunny.cut[3]}}},
+    {title:'彎右半邊的臉，回到下巴', text:'從右耳旁邊往右、往下彎半圓，回到下巴的起點，多出來的一小段和起點重疊。', set:{0:{sh:'bunny', mode:'form', from:'start'}}},
+    {title:'下巴扭在一起', text:'重疊的地方互相扭 2 圈固定。', twists:[{sh:'bunny', x:.35, y:2.5, ang:0, len:1.2}]},
+    {title:'貼上眼睛和鼻子', text:'臉上點白膠，貼兩顆眼睛和一顆白色小毛球當鼻子。', tip:'可以先貼在一張圓形的白紙上，再黏到臉的後面，比較好貼。', deco:SH => [{type:'eye', ...P2(SH.bunny.map(-.75, .1)), r:.27}, {type:'eye', ...P2(SH.bunny.map(.75, .1)), r:.27}, {type:'pom', ...P2(SH.bunny.map(0, 1.0)), r:.3, c:'#fbf8f1'}]}
+   ], done:'兔子完成了！可以黏在髮夾或鉛筆上。'},
+
+  {name:'皇冠', level:2, theme:'折尖角・裝飾', cleaners:[{c:'yellow', txt:'1 根（30 公分）'}], extra:['小毛球 3 顆', '白膠'],
+   tip:'三個尖角中間最高、兩邊矮一點，看起來就像皇冠。',
+   shapes(){ return {crown: parts(30, [linePts(-4, 1.6, 4, 1.6), chain([[4,1.6],[3.3,-2.2],[1.65,-.1]]), chain([[1.65,-.1],[0,-2.9],[-1.65,-.1]]), chain([[-1.65,-.1],[-3.3,-2.2],[-4,1.6]]), linePts(-4, 1.6, -2.9, 1.6)])}; },
+   steps:[
+    {title:'底邊拉直', text:'毛根從一端開始，先留一段直直的當皇冠的底邊，大約 8 公分。', set:{0:{sh:'crown', mode:'form', from:'start', f:SH => SH.crown.cut[0]}}, marks:[{cl:0, s:0, text:'起點'}]},
+    {title:'折右邊的尖角', text:'在底邊的右邊尾端往上折，折出一個尖角再往下折到一半的高度。', tip:'折的地方用指甲壓一下。', set:{0:{sh:'crown', mode:'form', from:'start', f:SH => SH.crown.cut[1]}}},
+    {title:'折中間最高的尖角', text:'再往上折一個更高的尖角，一樣往下折到一半的高度。', set:{0:{sh:'crown', mode:'form', from:'start', f:SH => SH.crown.cut[2]}}},
+    {title:'折左邊的尖角，回到起點', text:'折第三個尖角，往下一路折回底邊的起點，多出來的和底邊重疊。', set:{0:{sh:'crown', mode:'form', from:'start'}}},
+    {title:'頭尾扭在一起', text:'重疊的地方互相扭 2 圈固定。', twists:[{sh:'crown', x:-3.45, y:1.6, ang:0, len:1.1}]},
+    {title:'尖角黏上毛球', text:'三個尖角上各點一點白膠，黏上小毛球當寶石。', deco:SH => [[3.3,-2.2,'#e2493f'],[0,-2.9,'#86cdf0'],[-3.3,-2.2,'#e2493f']].map(([x,y,c]) => ({type:'pom', ...P2(SH.crown.map(x, y - .25)), r:.42, c}))}
+   ], done:'皇冠完成了！可以給玩偶戴，或黏在髮箍上。'},
+
+  {name:'聖誕樹', level:2, theme:'來回折・裝飾', cleaners:[{c:'green', txt:'1 根（30 公分）'}], extra:['黃色毛球 1 顆（星星）', '彩色小毛球 4 顆', '白膠'],
+   tip:'每折一次都比上一次寬一點，樹才會上面尖、下面寬。',
+   shapes(){ const V = [[0,-4.6],[-1.0,-3.2],[1.2,-2.6],[-1.6,-1.6],[1.9,-.9],[-2.3,.1],[2.6,.9],[-2.9,1.9],[0,2.3],[0,4.3]];
+     return {tree: parts(30, [chain(V.slice(0,3)), chain(V.slice(2,5)), chain(V.slice(4,7)), chain(V.slice(6,9)), chain(V.slice(8,10))], [0,0])}; },
+   steps:[
+    {title:'樹頂先折兩折', text:'毛根的一端是樹頂。往左下斜一小段，折回來往右斜，做出最上面窄窄的兩折。', set:{0:{sh:'tree', mode:'form', from:'start', f:SH => SH.tree.cut[0]}}, marks:[{cl:0, s:0, text:'樹頂'}]},
+    {title:'往下折，越折越寬', text:'繼續左、右來回折，每一折都比上面長一點。', tip:'像在寫很多個「Z」。', set:{0:{sh:'tree', mode:'form', from:'start', f:SH => SH.tree.cut[1]}}},
+    {title:'再折兩折', text:'再來回折兩次，樹變得更寬。', set:{0:{sh:'tree', mode:'form', from:'start', f:SH => SH.tree.cut[2]}}},
+    {title:'最下面一層，收回中間', text:'折最寬的一層，然後把毛根帶回樹的正中間。', set:{0:{sh:'tree', mode:'form', from:'start', f:SH => SH.tree.cut[3]}}},
+    {title:'剩下的往下當樹幹', text:'剩下的一小段直直往下，就是樹幹。', set:{0:{sh:'tree', mode:'form', from:'start'}}},
+    {title:'黏星星和彩球', text:'樹頂黏一顆黃色毛球當星星，樹上隨意黏幾顆彩色小毛球。', deco:SH => [{type:'pom', ...P2(SH.tree.map(0, -5.0)), r:.5, c:'#f6c636'}, ...[[1.2,-2.6,'#e2493f'],[-1.6,-1.6,'#86cdf0'],[1.9,-.9,'#f390b5'],[-2.3,.1,'#e2493f']].map(([x,y,c]) => ({type:'pom', ...P2(SH.tree.map(x, y)), r:.36, c}))]}
+   ], done:'聖誕樹完成了！把樹幹插在一小塊黏土上，就可以站起來。'},
+
+  {name:'雪花', level:2, theme:'三根交叉', cleaners:[{c:'sky', txt:'半根（15 公分）'}, {c:'blue', txt:'半根（15 公分）'}, {c:'sky', txt:'半根（15 公分）'}], extra:['白色小毛球 6 顆', '白膠'],
+   tip:'三根都要在「中點」交叉，雪花才會六邊一樣長。先各自對摺找出中點。',
+   shapes(){ const ln = d => { const [x,y] = pol(d*D2R, 7.5); return asIs(linePts(-x, -y, x, y)); }; return {a: ln(90), b: ln(30), c: ln(150)}; },
+   steps:[
+    {title:'第一根直直放好', text:'拿第一根淺藍色毛根，先對摺找出中點，再打開，直直地放在桌上。', set:{0:{sh:'a', mode:'morph', from:'mid'}}, marks:[{cl:0, s:.5, text:'中點'}]},
+    {title:'拿出第二根', text:'拿出藍色毛根，一樣先對摺找出中點，放在旁邊。', park:{1:true}, marks:[{cl:1, s:.5, text:'中點'}]},
+    {title:'第二根斜斜疊上去', text:'把藍色毛根斜斜地疊在第一根上面，兩根的中點對在一起，像一個打叉。', set:{1:{sh:'b', mode:'morph', from:'mid'}}},
+    {title:'在中心互相扭一圈', text:'捏住交叉的中心，把兩根互相扭 1 圈，兩根就固定在一起了。', twists:[{x:0, y:0, ang:60, len:.9}]},
+    {title:'拿出第三根', text:'拿出最後一根淺藍色毛根，對摺找出中點，放在旁邊。', park:{2:true}, marks:[{cl:2, s:.5, text:'中點'}]},
+    {title:'第三根往另一邊斜疊', text:'把第三根往另一個方向斜斜疊上去，中點一樣對準中心。現在有六個方向了。', set:{2:{sh:'c', mode:'morph', from:'mid'}}},
+    {title:'中心再扭一圈', text:'把第三根和前面兩根在中心扭 1 圈固定，再把六根調成一樣的間隔。', twists:[{x:0, y:0, ang:120, len:.9}]},
+    {title:'尖端黏上小毛球', text:'六個尖端各點一點白膠，黏上白色小毛球。', deco:() => [90,30,150,270,210,330].map(d => { const [x,y] = pol(d*D2R, 7.3); return {type:'pom', x, y, r:.36, c:'#fbf8f1'}; })}
+   ], done:'雪花完成了！綁一條線，掛在窗邊。'},
+
+  /* ---------------- ★★★ ---------------- */
   {name:'小狗', level:3, theme:'連續彎折・一根做到底', cleaners:[{c:'brown', txt:'1 根（30 公分）'}], extra:['活動眼睛 1 顆', '白膠'],
    tip:'每彎一個部位就停下來，對照 A4 模板放在上面比一比，再彎下一個。',
    shapes(){ const K = [[-3.9,-2.4],[-3.75,-1.3],[-3.2,-.35],[-3.25,2.9],[-2.6,2.95],[-2.65,.8],[.9,.8],[.9,2.95],[1.55,2.95],[1.6,.3],[2.0,-.9],[3.5,-.95],[4.35,-1.45],[4.0,-2.25],[3.0,-2.75],[2.25,-2.45],[1.75,-1.75],[1.85,-.95],[2.2,-1.6],[1.75,-.5],[.3,-.35],[-3.1,-.4]];
-     const sharp = [2,3,4,5,6,7,8,10,12,15,17], dog = fitL(chaikin(K, sharp, 3), 30); dog.keys = K.map(([x,y]) => dog.map(x,y)); return {dog}; },
+     const dog = fitL(chaikin(K, [2,3,4,5,6,7,8,10,12,15,17], 3), 30); dog.keys = K.map(([x,y]) => dog.map(x,y)); return {dog}; },
    steps:[
-    {title:'尾巴和後腳', text:'從毛根一端開始：先彎一小段往上翹當尾巴，再往下折出後腳，折回來往前。', tip:'腳是往下、再折回往上，像一個細細的 U。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[5])}}},
-    {title:'肚子和前腳', text:'往前拉直當肚子，再往下折出前腳，一樣折回往上。', tip:'前後腳的長度一樣，小狗才站得穩。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[9])}}},
-    {title:'脖子和頭', text:'往上彎出脖子，再繞一個圈當頭，前面突出來一點點就是鼻子。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[15])}}},
-    {title:'耳朵和背', text:'在頭的後面往下彎出垂垂的耳朵，再沿著背往後拉，尾端在屁股的地方扭一圈固定。', tip:'尾端剩太長，可以多繞一圈在屁股上。', set:{0:{sh:'dog', mode:'form', from:'start'}}, twists:[{sh:'dog', x:-3.12, y:-.36, ang:0, len:.9}]},
-    {title:'貼上眼睛', text:'在頭上點一點白膠，貼上一顆活動眼睛。', tip:'沒有活動眼睛，也可以用黑色毛球或簽字筆畫在小紙片上。', deco:SH => [{type:'eye', ...((p) => ({x:p[0], y:p[1]}))(SH.dog.map(3.3,-1.9)), r:.32}]}
+    {title:'先彎尾巴', text:'從毛根的一端開始，留一小段往上翹，這是尾巴。尾巴下面就是屁股。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[2])}}, marks:[{cl:0, s:0, text:'尾巴尖'}]},
+    {title:'折出後腳', text:'從屁股直直往下折，到腳底再折回往上，像一個細細的 U，這是後腳。', tip:'腳底的地方折兩次，腳掌才會平平的。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[5])}}},
+    {title:'拉出肚子', text:'往前拉一段直直的，這是肚子。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[6])}}},
+    {title:'折出前腳', text:'一樣往下折到腳底，再折回往上，這是前腳。前後腳要一樣長。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[9])}}},
+    {title:'脖子和頭', text:'往上彎出脖子，再往前繞一個圈當頭，前面突出來的地方是鼻子。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[15])}}},
+    {title:'彎出垂垂的耳朵', text:'在頭的後面往下彎一小段再折回來，這是垂下來的耳朵。', set:{0:{sh:'dog', mode:'form', from:'start', f:SH => fracAt(SH.dog, SH.dog.keys[19])}}},
+    {title:'沿著背拉回屁股', text:'剩下的一段沿著背往後拉，一直拉到屁股的地方。', set:{0:{sh:'dog', mode:'form', from:'start'}}},
+    {title:'尾端扭在屁股上', text:'尾端繞著屁股的地方扭 1～2 圈固定。', tip:'尾端剩太長，可以多繞一圈。', twists:[{sh:'dog', x:-3.12, y:-.36, ang:0, len:.9}]},
+    {title:'貼上眼睛', text:'在頭上點一點白膠，貼上一顆活動眼睛。', tip:'沒有活動眼睛，也可以用黑色小毛球。', deco:SH => [{type:'eye', ...P2(SH.dog.map(3.3, -1.9)), r:.32}]}
    ], done:'小狗完成了！把腳稍微往外張開，牠就可以站在桌上。'},
-  {name:'聖誕花圈', level:3, theme:'扭轉・繞圈・裝飾', cleaners:[{pair:['green','lgreen'], txt:'深綠、草綠各 1 根（圈）'}, {c:'yellow', txt:'1 根（繞在外面）', z:1}, {c:'red', txt:'半根 15 公分（蝴蝶結）', z:2}], extra:['小毛球 6 顆', '緞帶或毛線 20 公分', '白膠'],
+
+  {name:'太陽', level:3, theme:'捲螺旋・折光芒', cleaners:[{c:'yellow', txt:'1 根（圓臉）'}, {c:'orange', txt:'1 根（光芒）'}], extra:['活動眼睛 2 顆', '白膠'],
+   tip:'螺旋要捲得平、捲得緊，圓臉才會結實。光芒的每一折大約一個指節長。',
+   shapes(){ const face = parts(0, splitN(spiralPts(0, 0, .62, 30, 90, .15), 3)), V = [];
+     for (let i=0;i<=16;i++){ const [x,y] = pol((90 + 22.5*i)*D2R, i%2 ? 4.0 : 2.75); V.push([x,y]); }
+     return {face, rays: parts(0, [chain(V.slice(0,5)), chain(V.slice(4,9)), chain(V.slice(8,13)), chain(V.slice(12,17)), arcP(0, 0, 2.75, 90, 110, 8)])}; },
+   steps:[
+    {title:'黃色從一端捲第一圈', text:'黃色毛根從一端開始，往內彎一個小小的圈，這是太陽臉的中心。', tip:'繞在鉛筆上起頭。', set:{0:{sh:'face', mode:'form', from:'start', f:SH => SH.face.cut[0]*.45}}, marks:[{cl:0, s:0, text:'從這端開始'}]},
+    {title:'貼著往外捲', text:'貼著小圈一圈一圈往外捲，放在桌上壓著捲，才會平。', set:{0:{sh:'face', mode:'form', from:'start', f:SH => SH.face.cut[1]}}},
+    {title:'整根捲完', text:'把整根都捲完，變成一個像蚊香的圓盤，尾端停在圓盤的正下方。', set:{0:{sh:'face', mode:'form', from:'start'}}},
+    {title:'拿出橘色毛根', text:'現在做光芒。拿出橘色毛根，先放在圓盤旁邊。', park:{1:true}},
+    {title:'橘色的一端勾在圓盤下方', text:'橘色毛根的一端放在圓盤的正下方，和黃色的尾端並在一起，互相扭 2 圈固定。', set:{1:{sh:'rays', mode:'morph', from:'start', f:0}}, twists:[{x:0, y:2.75, ang:0, len:.9, c:['orange','yellow']}], marks:[{cl:1, s:0, text:'這一端固定在圓盤下方'}]},
+    {title:'折出前兩道光芒', text:'沿著圓盤的邊，往外折一小段、再折回來貼著圓盤，這是一道光芒。照樣再折一道。', tip:'往外、回來，往外、回來。', set:{1:{sh:'rays', mode:'form', from:'start', f:SH => SH.rays.cut[0]}}},
+    {title:'繼續折到一半', text:'繞著圓盤繼續往外、回來，折到圓盤的上方，一共四道光芒。', set:{1:{sh:'rays', mode:'form', from:'start', f:SH => SH.rays.cut[1]}}},
+    {title:'折完一整圈', text:'繼續折完另外半圈，一共八道光芒，回到下方的起點。', set:{1:{sh:'rays', mode:'form', from:'start'}}},
+    {title:'尾端扭回起點', text:'橘色的尾端和起點扭 1～2 圈，光芒就圍成一圈固定在圓盤外面。', twists:[{x:-.5, y:2.75, ang:0, len:1.0, c:['orange','orange']}]},
+    {title:'貼上眼睛', text:'圓盤上點白膠，貼兩顆活動眼睛，再用簽字筆在小紙片上畫微笑貼上去。', deco:() => [{type:'eye', x:-.8, y:-.4, r:.32}, {type:'eye', x:.8, y:-.4, r:.32}]}
+   ], done:'太陽完成了！背面黏一塊磁鐵，可以吸在白板上。'},
+
+  {name:'蝸牛', level:3, theme:'捲螺旋・組合', cleaners:[{c:'lgreen', txt:'半根多一點（約 16 公分，身體）'}, {c:'orange', txt:'1 根（殼）', z:1}], extra:['活動眼睛 1 顆', '白膠'],
+   tip:'殼先在旁邊捲好，再放到身體上。殼的尾端要留一點點，才能扭在身體上。',
+   shapes(){ return {body: parts(0, [linePts(-4.6, 2.3, 2.4, 2.3), qc(2.4, 2.3, 3.9, 2.2, 3.9, -.2), chain([[3.9,-.2],[3.4,-2.3],[3.9,-.3]]), linePts(3.9, -.3, 4.8, -2.1)]), shell: parts(0, splitN(spiralPts(-.7, -.35, .62, 30, 90, .15), 3))}; },
+   steps:[
+    {title:'身體拉直', text:'草綠色毛根從一端開始，先留一段直直的，這是蝸牛貼在地上的身體，起點是尾巴。', set:{0:{sh:'body', mode:'form', from:'start', f:SH => SH.body.cut[0]}}, marks:[{cl:0, s:0, text:'尾巴'}]},
+    {title:'脖子往上彎', text:'身體的前面往上彎起來，這是蝸牛抬起來的脖子和頭。', set:{0:{sh:'body', mode:'form', from:'start', f:SH => SH.body.cut[1]}}},
+    {title:'折出第一根觸角', text:'從頭頂往上拉一小段再折回頭頂，兩段併在一起，這是第一根觸角。', tip:'折回來的兩段捏緊。', set:{0:{sh:'body', mode:'form', from:'start', f:SH => SH.body.cut[2]}}},
+    {title:'剩下的當第二根觸角', text:'剩下的一小段往另一邊斜斜往上，就是第二根觸角。身體完成了。', set:{0:{sh:'body', mode:'form', from:'start'}}},
+    {title:'拿出橘色毛根', text:'現在做殼。拿出橘色毛根，先放在旁邊。', park:{1:true}},
+    {title:'橘色從一端捲第一圈', text:'橘色毛根從一端開始，往內彎一個小小的圈，這是殼的中心。', tip:'繞在鉛筆上起頭。', set:{1:{sh:'shell', at:[0, -6.4], mode:'form', from:'start', f:SH => SH.shell.cut[0]*.45}}},
+    {title:'一圈一圈往外捲', text:'貼著小圈一圈一圈往外捲，壓在桌上捲才會平。', set:{1:{sh:'shell', at:[0, -6.4], mode:'form', from:'start', f:SH => SH.shell.cut[1]}}},
+    {title:'整根捲完', text:'把整根捲完，變成一個圓圓的殼，尾端在殼的下方。', set:{1:{sh:'shell', at:[0, -6.4], mode:'form', from:'start'}}},
+    {title:'把殼放到身體上', text:'把捲好的殼立著放在身體的中間，殼的尾端碰到身體。', set:{1:{sh:'shell', mode:'morph', from:'start'}}},
+    {title:'殼的尾端扭在身體上', text:'殼的尾端繞著身體扭 2 圈，殼就固定在背上了。', twists:[{x:-.7, y:2.3, ang:0, len:1.0, c:['orange','lgreen']}]},
+    {title:'貼上眼睛', text:'在頭上點白膠，貼一顆活動眼睛。', deco:() => [{type:'eye', x:3.6, y:.5, r:.26}]}
+   ], done:'蝸牛完成了！慢慢爬的小蝸牛，放在盆栽旁邊最可愛。'},
+
+  {name:'魔法棒', level:3, theme:'麻花棒＋星星', cleaners:[{pair:['purple','pink'], txt:'紫、粉紅各剪 12 公分（棒子）'}, {c:'yellow', txt:'1 根（星星）', z:1}],
+   tip:'星星先在旁邊折好，再放到棒子上扭緊，比較不會歪。',
+   shapes(){ return {stick: asIs(linePts(0, 8, 0, -3.8)), star: parts(0, starParts(0, -5.4, 3.9, 1.6))}; },
+   steps:[
+    {title:'棒子：一端扭在一起', text:'紫色和粉紅色毛根並排，把一端對齊捏住，互相扭 2 圈固定。', twists:[{cl:0, s:.012, len:.9}], marks:[{cl:0, s:.02, text:'從這端開始'}]},
+    {title:'整根扭成麻花', text:'一手捏住扭好的那端，另一手捏住另一端一直轉，整根變成雙色麻花，這是魔法棒的棒子。', set:{0:{tw:1}}},
+    {title:'把棒子直直擺好', text:'把麻花棒拉直、立起來放好，上面等一下要接星星。', set:{0:{sh:'stick', mode:'morph', from:'start'}}},
+    {title:'拿出黃色毛根', text:'現在做星星。拿出黃色毛根，先放在棒子旁邊。', park:{1:[7.8, -1.5]}},
+    {title:'折出第一個尖角', text:'黃色毛根的一端先留 1 公分，斜斜往外拉出一小段再折回來，就是第一個尖角。', tip:'每一小段大約 3 公分。', set:{1:{sh:'star', at:[7.8, 0], mode:'form', from:'start', f:SH => SH.star.cut[1]}}, marks:[{cl:1, s:0, text:'起點留 1 公分'}]},
+    {title:'再折兩個尖角', text:'照同樣的長度，往外、折回來，再做兩個尖角。', set:{1:{sh:'star', at:[7.8, 0], mode:'form', from:'start', f:SH => SH.star.cut[3]}}},
+    {title:'折完五個尖角', text:'再折兩個，一共五個尖角，尾端回到起點旁邊。', set:{1:{sh:'star', at:[7.8, 0], mode:'form', from:'start'}}},
+    {title:'星星的頭尾先扭一圈', text:'星星的起點和尾端並在一起，先扭 1 圈，星星就不會散開。下面留兩小段尾巴。', twists:[{x:7.8, y:-3.1, ang:90, len:1.1, c:['yellow','yellow']}]},
+    {title:'把星星放到棒子上面', text:'把星星移到棒子的正上方，星星下面的兩小段尾巴，貼在棒子頂端的兩邊。', set:{1:{sh:'star', mode:'morph', from:'start'}}},
+    {title:'星星的尾巴扭在棒子上', text:'把星星的兩小段尾巴繞著棒子的頂端扭 2 圈，星星就固定在棒子上了。', twists:[{x:0, y:-3.15, ang:90, len:1.3, c:['yellow','purple']}]}
+   ], done:'魔法棒完成了！揮一揮，變變變！'},
+
+  {name:'聖誕花圈', level:3, theme:'扭轉・纏繞・蝴蝶結', cleaners:[{pair:['green','lgreen'], txt:'深綠、草綠各 1 根（圈）'}, {c:'yellow', txt:'1 根（繞在外面）', z:1}, {c:'red', txt:'半根 15 公分（蝴蝶結）', z:2}], extra:['小毛球 6 顆', '緞帶或毛線 20 公分', '白膠'],
    tip:'圈的大小可以套在碗或杯子外面來彎，會很圓。',
    shapes(){ const ring = []; const ext = 1.6/WR/D2R; for (let i=0;i<=200;i++){ const a = 90 + (360 + ext)*i/200; ring.push(pol(a*D2R, WR)); }
-     const wrap = []; for (let i=0;i<=420;i++){ const a = 90*D2R + TAU*i/420, r = WR + .42*Math.sin(7*(a - Math.PI/2)); wrap.push(pol(a, r)); }
-     const bowRaw = join(linePts(-1, 1.7, 0, 0), loopPts(0, 0, 196, 2.1, .95, 44), loopPts(0, 0, -16, 2.1, .95, 44), linePts(0, 0, 1, 1.7));
-     return {ring: asIs(ring), wrap: asIs(wrap), bow: fitL(bowRaw, 15, [0,0], [0, WR + .15])}; },
+     const NW = 5, RHO = .58, wrap = []; for (let i=0;i<=500;i++){ const th = Math.PI/2 + TAU*i/500, ph = NW*(th - Math.PI/2) + Math.PI/2; wrap.push(pol(th, WR + RHO*Math.cos(ph))); }
+     const w = parts(0, splitN(wrap, 5)); w.hf = (x, y) => .55 + RHO*Math.sin(NW*(Math.atan2(y, x) - Math.PI/2) + Math.PI/2);   // 真的繞著圈轉：從上面跨過去、從下面繞回來
+     const bow = parts(15, [linePts(-1, 1.7, 0, 0), loopPts(0, 0, 196, 2.1, .95, 44), loopPts(0, 0, -16, 2.1, .95, 44), linePts(0, 0, 1, 1.7)], [0,0], [0, WR + .15]);
+     bow.loops = 1 - 2*bow.cut[0]; return {ring: parts(0, splitN(ring, 2)), wrap: w, bow, bowFlat: asIs(linePts(-7.5, WR + .15, 7.5, WR + .15))}; },
    steps:[
-    {title:'兩根扭成一條', text:'深綠和草綠兩根並排，一端扭在一起，再整根扭成麻花。', tip:'兩個顏色扭在一起，花圈看起來比較有層次。', set:{0:{tw:1}}},
-    {title:'彎成圓圈、頭尾扭緊', text:'把扭好的毛根彎成一個圓圈，頭尾重疊一小段，互相扭兩圈固定。', tip:'套在杯子外面彎，圓圈會很圓。', set:{0:{sh:'ring', mode:'form', from:'start'}}, twists:[{x:-.8, y:WR, ang:0, len:1.6, c:['green','lgreen']}]},
-    {title:'第三根繞在外面', text:'黃色毛根的一端扭在圈上，一圈一圈斜斜地繞著花圈，像金色彩帶，繞到最後一樣扭緊。', tip:'繞的間距差不多，花圈看起來就會很蓬。', set:{1:{sh:'wrap', mode:'form', from:'start'}}},
-    {title:'做紅色蝴蝶結', text:'紅色半根在中間彎出左右兩個小圈，像蝴蝶結，中間扭在花圈的下面。', tip:'兩個圈一樣大，蝴蝶結才漂亮。', set:{2:{sh:'bow', mode:'morph', from:'mid'}}, twists:[{x:0, y:WR + .15, ang:90, len:.75, c:['red','red']}]},
+    {title:'兩根綠色：一端扭在一起', text:'深綠和草綠兩根並排，把一端對齊捏住，互相扭 2 圈固定。', twists:[{cl:0, s:.012, len:.9}], marks:[{cl:0, s:.02, text:'從這端開始'}]},
+    {title:'整根扭成麻花', text:'一手捏住扭好的那端，另一手捏住另一端一直轉，兩根扭成一條綠色麻花。', tip:'兩個顏色扭在一起，花圈看起來比較有層次。', set:{0:{tw:1}}},
+    {title:'先彎半個圓', text:'把麻花從一端開始慢慢彎成圓弧，先彎到一半。', tip:'套在杯子外面彎，會很圓。', set:{0:{sh:'ring', mode:'form', from:'start', f:SH => SH.ring.cut[0]}}},
+    {title:'彎成整個圓圈', text:'繼續彎完另一半，頭和尾在下方重疊一小段。', set:{0:{sh:'ring', mode:'form', from:'start'}}},
+    {title:'頭尾扭緊', text:'重疊的地方互相扭 2 圈，圓圈就固定了。', twists:[{x:-.8, y:WR, ang:0, len:1.6, c:['green','lgreen']}]},
+    {title:'拿出黃色毛根', text:'現在把黃色毛根繞在圈上當彩帶。拿出黃色毛根，先放在圈的下面。', park:{1:true}},
+    {title:'黃色的一端固定在圈的下方', text:'黃色毛根的一端放在圈的正下方（剛剛扭緊的地方），繞著綠圈扭 2 圈固定。另一端先放著。', set:{1:{sh:'wrap', mode:'morph', from:'start', f:0}}, twists:[{x:.25, y:WR, ang:0, len:.8, c:['yellow','green']}], marks:[{cl:1, s:0, text:'這一端固定在圈的下方'}]},
+    {title:'繞第一圈：從上面跨過、從下面繞回來', text:'拿著黃色的另一端，從綠圈的「上面」跨到圈的外側，再從「下面」穿回圈的內側。這樣就繞了一圈。', tip:'一手扶著綠圈，另一手帶著黃色毛根穿過圈的中間。可以按「側面」看清楚上下。', set:{1:{sh:'wrap', mode:'form', from:'start', f:SH => SH.wrap.cut[0]}}},
+    {title:'照同樣的間距再繞兩圈', text:'往旁邊移一點，一樣從上面跨過、從下面繞回來。再做一次，現在繞到圈的上方了。', tip:'每一圈的間距差不多，彩帶才會平均。', set:{1:{sh:'wrap', mode:'form', from:'start', f:SH => SH.wrap.cut[2]}}},
+    {title:'繞完一整圈', text:'繼續繞完剩下的兩圈，回到圈的下方。', set:{1:{sh:'wrap', mode:'form', from:'start'}}},
+    {title:'黃色的尾端扭在起點', text:'黃色的尾端和一開始固定的那端碰在一起，互相扭 1～2 圈。', twists:[{x:-.3, y:WR + .1, ang:0, len:.9, c:['yellow','yellow']}]},
+    {title:'拿出紅色毛根', text:'最後做蝴蝶結。拿出紅色半根毛根，先放在圈的下面，對摺找出中點再打開。', park:{2:true}, marks:[{cl:2, s:.5, text:'中點'}]},
+    {title:'紅色的中點放在圈的下方', text:'把紅色毛根橫放，中點對準圈的正下方。', set:{2:{sh:'bowFlat', mode:'morph', from:'mid'}}, marks:[{cl:2, s:.5, text:'中點對準這裡'}]},
+    {title:'左右各彎一個圈', text:'左邊的一段往上繞一個圈，回到中點；右邊的一段也繞一個一樣大的圈回到中點。這是蝴蝶結的兩個耳朵。', tip:'兩個圈一樣大，蝴蝶結才漂亮。', set:{2:{sh:'bow', mode:'form', from:'mid', f:SH => SH.bow.loops}}},
+    {title:'兩條尾巴往下交叉', text:'兩邊剩下的尾巴在中點交叉，各自往下斜斜垂著。', set:{2:{sh:'bow', mode:'form', from:'mid'}}},
+    {title:'蝴蝶結扭在花圈上', text:'捏住蝴蝶結的中心，把交叉的地方繞著綠圈扭 2 圈，蝴蝶結就固定在花圈下方。', twists:[{x:0, y:WR + .15, ang:90, len:.75, c:['red','red']}]},
     {title:'黏毛球、綁掛繩', text:'在花圈上用白膠黏幾顆紅色、黃色小毛球，上面綁一段緞帶當掛繩。', tip:'毛球不用排很整齊，隨意貼最自然。', deco:() => [...[-150,-112,-68,-30,28,152].map((a,i) => ({type:'pom', x:pol(a*D2R, WR)[0], y:pol(a*D2R, WR)[1], r:.5, c:i%2 ? '#f6c636' : '#e2493f'})), {type:'loop', x:0, y:-WR, h:3, c:'#e2493f'}]}
    ], done:'聖誕花圈完成了！掛在門上、窗邊，或放在桌上當裝飾。'}
 ];
 
 function pipeGeo(les){
   const SH = les.shapes();
-  for (const k in SH){ SH[k].pts = resample(SH[k].pts, PM); }
+  for (const k in SH){ SH[k].pts = resample(SH[k].pts, PM); if (SH[k].hf) SH[k].h = SH[k].pts.map(([x,y]) => SH[k].hf(x, y)); }
   const resolve = v => typeof v === 'function' ? v(SH) : v;
   const n = les.cleaners.length;
   const cls = les.cleaners.map((c,i) => ({...c, i, z:c.z ?? i, cols: c.pair ? c.pair.map(k => COLORS[k].h) : [COLORS[c.c].h], name: c.pair ? c.pair.map(k=>COLORS[k].n).join('、') : COLORS[c.c].n}));
@@ -616,12 +842,17 @@ function pipeGeo(les){
   const gap = cls.map(c => c.pair ? 1.5 : 1.15), tot = gap.reduce((a,b)=>a+b,0); let y = -tot/2;
   const tray = cls.map((c,i) => { y += gap[i]/2; const P = []; for (let j=0;j<PM;j++) P.push([-c.L/2 + c.L*j/(PM-1), y]); y += gap[i]/2; return P; });
   const geomFrom = (T, f, from) => { if (f >= .9999) return T; return reconstruct(T, T, 1, 'form', from, 0, f, false, true); };
-  const ST = [{cl: cls.map((c,i) => ({sh:null, f:1, from:'mid', tw:0, vis:true, geo:tray[i]}))}];
+  const ST = [{cl: cls.map((c,i) => ({sh:null, f:1, from:'mid', tw:0, vis:true, geo:tray[i], hx:null}))}];
   const used = new Set(), twists = [], decos = [], marks = [];
   les.steps.forEach((s, j) => {
     const prev = ST[ST.length-1], st = {cl: prev.cl.map(c => ({...c}))}, idx = j+1;
+    if (s.park) for (const k in s.park){ const c = st.cl[k], L = cls[k].L, pk = s.park[k]; let cx = 0, yy = 0;   // 新拿出來的毛根：先直直放在作品旁邊
+      if (Array.isArray(pk)){ cx = pk[0]; yy = pk[1]; }
+      else { let y1 = -1e9, x0 = 1e9, x1 = -1e9; prev.cl.forEach((q, qi) => { if (!used.has(qi)) return; for (const [x,y] of q.geo){ y1 = Math.max(y1, y); x0 = Math.min(x0, x); x1 = Math.max(x1, x); } }); if (y1 < -1e8){ y1 = -2.4; x0 = x1 = 0; } cx = (x0+x1)/2; yy = y1 + 2.4; }
+      used.add(+k); c.geo = Array.from({length:PM}, (_, j) => Array.isArray(pk) ? [cx, yy - L/2 + L*j/(PM-1)] : [cx - L/2 + L*j/(PM-1), yy]); c.sh = null; c.f = 1; c.from = 'mid'; c.hx = null; }
     if (s.set) for (const k in s.set){ const v = s.set[k], c = st.cl[k]; used.add(+k);
-      if (v.sh){ c.sh = v.sh; c.f = v.f !== undefined ? resolve(v.f) : 1; c.from = v.from || 'mid'; c.geo = geomFrom(SH[v.sh].pts, c.f, c.from); }
+      if (v.sh){ c.sh = v.sh; c.f = v.f !== undefined ? resolve(v.f) : 1; c.from = v.from || 'mid'; const base = SH[v.sh].pts, pts = v.at ? base.map(([x,y]) => [x + v.at[0], y + v.at[1]]) : base; c.geo = geomFrom(pts, c.f, c.from);
+        const hh = SH[v.sh].h; c.hx = hh ? hh.map((h, j) => { const d = c.from === 'start' ? j/(PM-1) : c.from === 'end' ? 1 - j/(PM-1) : Math.abs(j - (PM-1)/2)/((PM-1)/2); return d <= c.f ? h : null; }) : null; }
       if (v.tw !== undefined) c.tw = v.tw; }
     for (const tw of (s.twists || [])){ if (tw.cl !== undefined) used.add(tw.cl);
       let o = {...tw, step:idx, until: tw.until !== undefined ? tw.until : 1e9};
@@ -649,7 +880,7 @@ function reconstruct(A, B, t, mode, from, fA, fB, same, partialOnly){
   const tr = new Float64Array(M-1);
   for (let j=1;j<M-1;j++){
     let w;
-    if (partialOnly){ w = d(j) <= fB ? 1 : 0; tr[j] = tB[j]*w; continue; }
+    if (partialOnly){ w = fB > 0 && d(j) <= fB ? 1 : 0; tr[j] = tB[j]*w; continue; }
     if (mode === 'morph') w = e; else w = d(j) <= fB + 1e-9 ? clamp((F - d(j))/win, 0, 1) : e;
     tr[j] = tA[j] + (tB[j]-tA[j])*w;
   }
@@ -690,7 +921,9 @@ function pipeFrame(PG, A, B, t, si){
       if (a.geo !== b.geo){ const set = (step.set && step.set[i]) || {}, from = set.from || b.from; geo = reconstruct(a.vis ? a.geo : straightAt(b.geo, from), b.geo, t, set.mode || 'morph', from, a.f, b.f, a.sh === b.sh && a.from === b.from); }
       else geo = a.geo;
       alpha = a.vis ? (b.vis ? 1 : 1-t) : (b.vis ? clamp(t*4, 0, 1) : 0); tw = lerp(a.tw, b.tw, ease(t)); }
-    f.cl.push({geo, alpha, tw});
+    let hx = b.hx || null;
+    if (A >= 0 && A !== B){ const a = sA.cl[i]; if (a.hx || b.hx){ const e = ease(t); hx = b.geo.map((_, j) => { const ha = a.hx ? a.hx[j] : null, hb = b.hx ? b.hx[j] : null; return ha == null && hb == null ? null : lerp(ha ?? .3, hb ?? .3, e); }); } }
+    f.cl.push({geo, alpha, tw, hx});
   });
   const cB = PG.cams[B], cA = A < 0 ? cB : PG.cams[A], e = ease(t);
   f.cam = {k: lerp(cA.k, cB.k, e), cx: lerp(cA.cx, cB.cx, e), cy: lerp(cA.cy, cB.cy, e)};
@@ -732,7 +965,7 @@ function buildWeaveSteps(G){
   const depth = (rimR(G, G.ang(0), 1) - G.notchIn).toFixed(1).replace(/\.0$/,'');
   steps.push({type:'cut', title:`剪出 ${N} 個缺口`, text:`在每個記號上往中心剪一刀，長約 ${depth} 公分。一邊剪一邊數：1、2、3……一共 ${N} 個缺口。`, tip:'剪刀拿不穩的話，可以由帶領者先剪好，學員負責數數和檢查。'});
   steps.push({type:'warp', title:'繞放射線（經線）', text:`毛線從 1 號缺口穿到背面，線尾用膠帶貼住。再照順序直直拉到對面的缺口：${G.warpText}（每拉完一條，在背面移到隔壁號碼）。最後從 ${G.left+1} 號拉到中心就先停住。`, tip:'線都是直線，不用圖釘。對面的缺口剛好偏一點，所以線會在中心附近交叉成一個小星星，下一步再把它們收到正中間。'});
-  steps.push({type:'gather', title:'中心繞兩圈、拉緊收線', text:'最後拉到中心的那條線不要剪，用同一條線接著在所有交叉線的外面繞第 1 圈、第 2 圈。然後一手壓住紙盤中心，一手捏住線尾往外拉：線圈會越縮越小，把所有放射線收到正中間，最後打一個結。', tip:'慢慢拉，線圈縮到像一顆小豆子就可以打結。拉完數一數，從中心出去的線剛好是 ' + N + ' 條。'});
+  steps.push({type:'gather', title:'中心繞兩圈、拉緊收線', text:'最後拉到中心的那條線不要剪，用同一條線接著在所有交叉線的外面繞第 1 圈、第 2 圈。然後一手壓住紙盤中心，一手捏住線尾往外拉：線圈會越縮越小，把所有放射線收到正中間。最後把線尾越過中心、從對面的線圈下面穿出去再拉緊，就是一個結。', tip:'慢慢拉，線圈縮到像一顆小豆子再打結。拉完數一數，從中心出去的線剛好是 ' + N + ' 條。'});
   { const s0 = G.stripes[0], nm0 = COLORS[s0.c].n;
     steps.push({type:'tie', swatch:s0.hex, title:'把毛線綁在放射線上', text:`${nm0}色毛線穿進塑膠針。針從靠近中心的一條放射線「下面」穿過去，拉到剩大約 5 公分的線尾；再繞回來、從繞出來的圈裡穿出去，拉緊就是一個結。同樣再做一次，毛線就牢牢綁在放射線上了。`, tip:'線尾不用剪，等一下編的時候壓在下面，會被蓋住。'}); }
   if (G.web){
@@ -771,8 +1004,8 @@ const ONLY = 'pipe';
 const SITES = {
   '':{name:'紙盤編織・毛根造型', seal:'編', desc:'兩個手作單元、各 6 課由簡到難，3D 立體示範、可以轉動視角和翻到背面看。附實際大小的 A4 模板。'},
   weave:{name:'紙盤編織', seal:'編', desc:'6 課由簡到難：紙盤剪奇數缺口、繞放射線、一上一下編出圓盤。3D 立體示範，可以轉動視角、翻到背面看，附實際大小的 A4 缺口模板。', other:['毛根造型', 'https://mattsue1003.github.io/pipe-cleaner-crafts/']},
-  pipe:{name:'毛根造型', seal:'彎', desc:'6 課由簡到難：毛根彎一彎、繞一繞、扭一扭，變成愛心、棒棒糖、小花、蝴蝶、小狗和聖誕花圈。3D 立體示範，可以轉動視角，附實際大小的 A4 形狀模板。', other:['紙盤編織', 'https://mattsue1003.github.io/paper-plate-weaving/']}
-}, SITE = SITES[ONLY], UNITS = ONLY ? [ONLY] : ['weave','pipe'];
+  pipe:{name:'毛根造型', seal:'彎', desc:'20 種造型由簡到難：毛根彎一彎、繞一繞、扭一扭，變成愛心、星星、小魚、兔子、小狗、太陽、聖誕花圈……每一步都有動畫帶著做。3D 立體示範，可以轉動視角，附實際大小的 A4 形狀模板。', other:['紙盤編織', 'https://mattsue1003.github.io/paper-plate-weaving/']}
+}, SITE = SITES[ONLY], UNITS = ONLY ? [ONLY] : ['weave','pipe'], NLES = UNITS.reduce((a, u) => a + (u === 'weave' ? WEAVE : PIPE).length, 0);
 const S = { mode:'lesson', unit:ONLY || 'weave', lesson:0, lastW:0, lastP:0, lstep:0, speed:'mid', custom:null };
 let LD = null, lessonSteps = [], loadSeq = 0;
 let busy = false, animToken = 0, recording = false, caption = null, hudMsg = null;
@@ -940,7 +1173,7 @@ function WeaveKit(G){
     P.push(at(A + d, G.notchIn + .38, lerp(HN, hu, .9)), at(A + d, G.notchIn + .2, lerp(HN, hu, .45)), at(A + d, G.notchIn + .05, HN)); return P; }
   const hops = []; G.chords.forEach((c, i) => { if (i) hops.push([G.chords[i-1][1], c[0]]); }); hops.push([G.chords[m-1][1], G.left]);
   const segT = G.warpSegs.map(s => { const t = makeTube(s.type === 'wrap' ? 150 : s.type === 'back' ? 24 : 64, 7, yarnMat); g.add(t.mesh); return t; });
-  const tailT = makeTube(8, 7, yarnMat), startT = makeTube(26, 7, yarnMat); g.add(tailT.mesh, startT.mesh);
+  const tailT = makeTube(16, 7, yarnMat), startT = makeTube(26, 7, yarnMat); g.add(tailT.mesh, startT.mesh);
   const knot = new THREE.Mesh(new THREE.SphereGeometry(.46, 20, 14), stdMat(G.warp, {roughness:1})); knot.position.y = HN; knot.castShadow = true; g.add(knot);
   // 線頭：從 1 號缺口穿到背面，貼在盤底背面
   { const A = ang(0), ru = G.notchIn + .5, hu = plateH(G, ru) - .2, at = (r, h, da=0) => { const [x,y] = pol(A + da, r); return [x, h, y]; }, P = [at(G.notchIn + .05, HN), at(G.notchIn + .2, lerp(HN, hu, .45)), at(G.notchIn + .38, lerp(HN, hu, .9)), at(ru, hu)];
@@ -954,12 +1187,16 @@ function WeaveKit(G){
       else if (s.type === 'back') P = hopPts(...hops[hi++]);
       else if (s.last) P = lastPts(ge); else P = wrapPts(ge);
       segT[i].set(P, RW, wc); });
-    const W = segT[segT.length-1].P, e = W[W.length-1], d = Math.hypot(e[0], e[2]) || 1, L = lerp(.9, 2.6, ge)*(1 - .7*kn), T_ = [];
-    for (let j=0;j<=6;j++) T_.push([e[0] + e[0]/d*L*j/6, lerp(e[1], HN + .25, j/6), e[2] + e[2]/d*L*j/6]);
-    tailT.set(T_, RW, wc); K.tailEnd = T_[6]; }
+    const W = segT[segT.length-1].P, e = W[W.length-1], d = Math.hypot(e[0], e[2]) || 1, ux = e[0]/d, uz = e[2]/d, L = lerp(.9, 2.6, ge), T_ = [], kk = ease(kn);
+    // 線尾：平常往外拉直；打結時越過中心、從對面的線圈「下面」鑽出去，再拉緊
+    for (let j=0;j<=14;j++){ const u = j/14, sx = e[0] + ux*L*u, sy = lerp(e[1], HN + .25, u), sz = e[2] + uz*L*u;
+      const rr = lerp(d, -1.9, u), ky = u < .45 ? HN + .34 : u < .62 ? lerp(HN + .34, HN - .26, (u-.45)/.17) : u < .8 ? HN - .26 : lerp(HN - .26, HN + .05, (u-.8)/.2);
+      T_.push([lerp(sx, ux*rr, kk), lerp(sy, ky, kk), lerp(sz, uz*rr, kk)]); }
+    tailT.set(T_, RW, wc); K.tailEnd = T_[14]; }
   // ---- 緯線：真的一上一下 ----
   const ry = G.web ? .085 : G.yw*.4, delta = RW + ry*.9, sg = c => (c % 2 === 0 ? 1 : -1);
   const weftH = t => { const x = t/G.dA - .5, c0 = Math.floor(x), f = x - c0, s = f*f*(3-2*f); return HN + delta*lerp(sg(c0), sg(c0+1), s); };
+  const weftMat = new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, side:THREE.DoubleSide, transparent:true});
   const stripes = G.stripes.map(s => { let P = [], T;
     if (!G.web){ T = s.T; for (let i=0;i<T.length;i++) P.push([s.P[i*2], weftH(T[i]), s.P[i*2+1]]); }
     else { T = [0]; P.push([0, HN + delta, 0]); let prev = [0,0], prevT = 0; const rl = RW + ry + .02;   // 蜘蛛網：在每條放射線上真的繞一圈
@@ -968,7 +1205,7 @@ function WeaveKit(G){
         const tx = -Math.sin(ca), ty = Math.cos(ca), rx = Math.cos(ca), ry_ = Math.sin(ca);
         for (let i=1;i<=14;i++){ const w = i/14*TAU, dr = .16*i/14; P.push([c.x + tx*rl*Math.sin(w) + rx*dr, HN + rl*Math.cos(w), c.y + ty*rl*Math.sin(w) + ry_*dr]); T.push(c.t - .02 + .02*i/14); }
         prev = [c.x + rx*.16, c.y + ry_*.16]; prevT = c.t; } }
-    const tube = makeTube(P.length, 8, yarnMat); tube.set(P, ry, c3(s.hex), G.web ? 0 : 1.5); tube.count(0); g.add(tube.mesh);
+    const tube = makeTube(P.length, 8, weftMat); tube.set(P, ry, c3(s.hex), G.web ? 0 : 1.5); tube.count(0); g.add(tube.mesh);
     const kn = new THREE.Mesh(new THREE.SphereGeometry(ry*1.35, 12, 8), stdMat(hexShade(s.hex, -.12), {roughness:1})); kn.position.set(P[0][0], P[0][1], P[0][2]); kn.visible = false; g.add(kn);
     return {s, P, T, tube, kn}; });
   // ---- 綁在放射線上（開頭的線頭、最後的收尾都用同一招）：從下面穿過去 → 繞回來 → 從圈裡穿出來 → 拉緊 ----
@@ -980,10 +1217,10 @@ function WeaveKit(G){
     const to3 = (t, u, rr) => [cx + Tx*t + Rx*rr, HN + u, cy + Ty*t + Ry*rr];
     const H0 = [[-.6,.3,0],[-.3,-.34,.06],[.3,-.36,.12],[.64,.1,.18],[.25,.64,.22],[-.5,.72,.2],[-1.05,.38,.05],[-1.0,-.15,-.15],[-.45,-.3,-.12],[-.1,.15,-.05]];
     const loose = H0.map(([t,u,rr]) => { let uu = u*ks; if (Math.abs(t) < .4 && Math.abs(uu) < minU) uu = Math.sign(uu)*minU; return to3(t*ks*tS, uu, rr*ks); });
-    const tight = H0.map(([t,u,rr]) => to3(t*ks*tS*.3, .1 + (u*ks - .1)*.3, rr*ks*.3));
+    const tight = H0.map(([t,u,rr]) => to3(t*ks*tS*.4, .1 + (u*ks - .1)*.42, rr*ks*.4));
     const P_ = pre(to3), Q_ = post(to3), per = 7, L = crSpline([...P_, ...loose, ...Q_], per), T_ = crSpline([...P_, ...tight, ...Q_], per), col = c3(hex);
     const tube = makeTube(L.length, 7, yarnMat); tube.mesh.visible = false; g.add(tube.mesh);
-    const kn = new THREE.Mesh(new THREE.SphereGeometry(ry*1.7, 14, 10), stdMat(hexShade(hex, -.1), {roughness:1})); kn.position.set(...to3(0, .1, 0)); kn.visible = false; kn.castShadow = true; g.add(kn);
+    const kn = new THREE.Mesh(new THREE.SphereGeometry(ry*1.15, 14, 10), stdMat(hex, {roughness:1})); kn.position.set(...to3(0, .1, 0)); kn.visible = false; kn.castShadow = true; g.add(kn);
     return {tube, kn, n:L.length, c:to3(0, .1, 0), f: i => clamp((P_.length + i)*per/(L.length-1), 0, 1), set(q){ tube.set(L.map((p, i) => [lerp(p[0], T_[i][0], q), lerp(p[1], T_[i][1], q), lerp(p[2], T_[i][2], q)]), ry, col); } };
   }
   const st0 = stripes[0], stN = stripes[stripes.length-1];
@@ -1039,7 +1276,7 @@ function WeaveKit(G){
       const c = v.cinch ?? (v.warpT >= 1 ? 1 : 0), kn = c >= 1 ? (v.knotG ?? 1) : 0, wk = c.toFixed(4) + '|' + kn.toFixed(3);
       if (K.warp !== wk){ K.warp = wk; buildWarp(c, kn); }
       const target = v.warpT*G.warpLen; G.warpSegs.forEach((s, i) => { segT[i].mesh.visible = v.warpT > 0; segT[i].reveal(clamp((target - s.at)/s.len, 0, 1)); });
-      tailT.mesh.visible = v.warpT >= 1; knot.visible = kn > 0; knot.scale.setScalar(Math.max(.001, kn));
+      tailT.mesh.visible = v.warpT >= 1; knot.visible = false;
       // 緯線
       let tip = null;
       for (const st of stripes){ const {s, T, P, tube, kn:jk} = st; let n = 0;
@@ -1048,8 +1285,9 @@ function WeaveKit(G){
         if (n >= 2 && v.wt <= s.tb + 1e-9 && !tip) tip = {p:P[n-1], q:P[n-2]}; }
       kit.tip = tip;
       for (const [o, nm] of [[tie, 'tie'], [fin, 'fin']]){ const p_ = v[nm+'P'] || 0, q_ = v[nm+'Q'] || 0, k_ = v[nm+'K'] || 0; o.tube.mesh.visible = p_ > 0;
-        if (p_ > 0){ const kk = q_.toFixed(3); if (K[nm] !== kk){ K[nm] = kk; o.set(ease(q_)); } o.tube.reveal(p_); }
-        o.kn.visible = q_ > .5; if (o.kn.visible) o.kn.scale.setScalar(Math.max(.001, ease((q_-.5)*2)*(.8 + .3*k_))); }
+        if (p_ > 0){ const kk = q_.toFixed(3); if (K[nm] !== kk){ K[nm] = kk; o.set(ease(q_)); } o.tube.reveal(nm === 'fin' ? lerp(p_, Math.min(p_, o.f(12.55)), v.finCut || 0) : p_); }
+        o.kn.visible = k_ > 0; if (o.kn.visible) o.kn.scale.setScalar(Math.max(.001, ease(k_))); }
+      weftMat.opacity = v.weftA ?? 1; weftMat.depthWrite = (v.weftA ?? 1) > .98;
       if (v.ndl){ const o = v.ndl === 'tie' ? tie : fin, P = o.tube.P, n = clamp(Math.round((v[v.ndl+'P'] || 0)*(o.n-1)), 1, o.n-1); tip = P ? {p:P[n], q:P[n-1], hitch:true} : null; }
       needle.visible = !!(tip && (tip.hitch || (v.wActive && v.wt < G.total)));
       if (needle.visible){ const {p, q} = tip, dx = p[0]-q[0], dy = p[1]-q[1], dz = p[2]-q[2], l = Math.hypot(dx,dy,dz) || 1; needle.position.set(p[0], p[1] + .02, p[2]);
@@ -1130,7 +1368,7 @@ function PipeKit(PG){
       const prev = [], info = []; kit.pts = [];
       for (const i of PG.order){ const c = f.cl[i], o = cls[i], pair = !!o.cl.pair;
         if (c.alpha <= 0){ o.strands.forEach(st => setStrand(st, null, 0)); continue; }
-        const twE = pair ? clamp(c.tw*2, 0, 1) : 0, base = PR_CORE + .1 + (pair ? PR_HELIX*twE : 0), H = liftH(c.geo, prev, base, pair ? .8 : .55, pair ? 1.0 : .8);
+        const twE = pair ? clamp(c.tw*2, 0, 1) : 0, base = PR_CORE + .1 + (pair ? PR_HELIX*twE : 0), H = liftH(c.geo, prev, base, pair ? .8 : .55, pair ? 1.0 : .8); if (c.hx) for (let j=0;j<H.length;j++) if (c.hx[j] != null) H[j] = Math.max(.24, c.hx[j]);
         prev.push({P:c.geo, H}); kit.pts[i] = c.geo.map((p, j) => [p[0], H[j], p[1]]); info.push({i, c, o, pair, twE, extra:null}); }
       // 扭轉固定：把經過這一小段的毛根本身，真的繞著彼此轉（兩圈），不是另外疊一個圖
       for (const tw of f.twists){ const turns = 2*(tw.tp ?? 1);
@@ -1170,7 +1408,7 @@ function wApply(s){
   else if (s.type==='gather'){ V.warpT = 1; V.cinch = 1; V.knotG = 1; }
   else if (s.type==='weave') V.wt = s.tb;
   else if (s.type==='tie'){ V.tieP = 1; V.tieQ = 1; V.tieK = 1; }
-  else if (s.type==='finish'){ V.finT = 1; V.finP = 1; V.finQ = 1; V.finK = 1; }
+  else if (s.type==='finish'){ V.finT = 1; V.finP = 1; V.finQ = 1; V.finK = 1; V.finCut = 1; }
   else if (s.type==='deco') V.deco[s.kind] = 1;
   else if (s.type==='done') V.doneT = 1;
 }
@@ -1354,7 +1592,8 @@ async function animWeave(i, s, tok){
     if (!await phase(3400, '第 2 圈：再繞一圈，一樣一上一下', t => V.warpT = lerp(a + (1-a)/2.25, 1, t))) return false; V.warpT = 1;
     if (!await phase(1400, '一手壓住中心，一手捏住線尾')) return false;
     if (!await phase(3400, '把線尾往外拉：線圈縮小，所有線被收到正中間', t => V.cinch = t)) return false; V.cinch = 1;
-    if (!await phase(1600, '打一個結固定，放射線就完成了', t => V.knotG = easeOut(t))) return false; V.knotG = 1;
+    if (!await phase(3200, '線尾越過中心，從對面那一側的線圈「下面」穿出去', t => V.knotG = t*.999)) return false; V.knotG = 1;
+    if (!await phase(1800, '拉緊，這就是一個結，放射線完成了')) return false;
     V.gLabel = ''; return wait(500, tok); }
   if (s.type==='petal'){ if (!await tween(2800*spd(), t => { V.amp = t; const a = G.ang(0) + t*TAU, [x,y] = pol(a, PR + .5); V.sc = {x, y, ang:a + Math.PI/2, open:Math.abs(Math.sin(t*60))*.8}; }, tok)) return false; V.sc = null; return wait(300, tok); }
   if (s.type==='cut'){ V.badgeA = 1; const per = 560*spd();
@@ -1387,13 +1626,18 @@ async function animWeave(i, s, tok){
     if (nm === 'tie'){ if (!await phase(1500, '拉過去，留下大約 5 公分的線尾')) return false; }
     if (!await phase(3200, '繞回來，從放射線的「上面」跨回去，旁邊留一個圈', go(h.f(3), h.f(7)))) return false;
     if (!await phase(3200, '針往下，從剛剛留的圈裡穿出來', go(h.f(7), h.f(10)))) return false;
-    if (!await phase(2600, '拉緊，結就卡在放射線上', t => { V[nm+'Q'] = t; })) return false;
-    if (!await phase(2000, '同樣的動作再做一次，打兩個結比較牢', t => { V[nm+'K'] = t; })) return false;
+    if (!await phase(2800, '慢慢拉緊：圈越縮越小，結就卡在放射線上', t => { V[nm+'Q'] = t; })) return false;
+    if (!await phase(2200, '同樣的動作再做一次（下面穿、繞回來、從圈裡穿出來），結會更牢', t => { V[nm+'K'] = t; })) return false;
     if (nm === 'tie'){ if (!await phase(1800, '線尾留著，等一下會被編進去蓋住', go(h.f(10), 1))) return false; V.ndl = null; V.gLabel = ''; return wait(400, tok); }
-    if (!await phase(3600, '針從編好的毛線「下面」往中心穿 3、4 排，把線尾藏進去', go(h.f(10), 1))) return false; V.ndl = null;
+    // 藏線尾：上面的毛線先變淡、鏡頭壓低，才看得到針是從毛線「下面」穿過去
+    const c0 = {...V.cam}, low = {...c0, el:34, span:c0.span*.9};
+    if (!await phase(1500, '接著藏線尾：把針對準編好的毛線下面', t => { V.weftA = lerp(1, .32, t); V.cam = lerpCam(c0, low, ease(t)); V[P_] = lerp(h.f(10), h.f(11), t); })) return false;
+    if (!await phase(4200, '針貼著紙盤，從毛線「下面」往中心穿過 3、4 排', go(h.f(11), h.f(12.55)))) return false;
+    if (!await phase(2200, '針從毛線中間鑽出來，把線拉到底', go(h.f(12.55), 1))) return false; V.ndl = null;
+    if (!await phase(1500, '毛線蓋回去，線尾就藏在下面了', t => { V.weftA = lerp(.32, 1, t); V.cam = lerpCam(low, c0, ease(t)); })) return false; V.weftA = 1;
     const e = h.tube.P[h.n-1];
-    if (!await phase(2200, '拉出來，貼著毛線把多的剪掉', t => { V.sc = {x:e[0] + .9, y:e[2] + .5, h:e[1] + .25, ang:Math.PI + .5, open:Math.abs(Math.cos(t*Math.PI*2.5))*.9, s:.8}; })) return false;
-    V.sc = null; V.finT = 1; V.gLabel = ''; return wait(400, tok); }
+    if (!await phase(2400, '露在外面的那一小段，貼著毛線剪掉', t => { V.sc = {x:e[0] + .9, y:e[2] + .5, h:e[1] + .25, ang:Math.PI + .5, open:Math.abs(Math.cos(t*Math.PI*2.5))*.9, s:.8}; V.finCut = t > .6 ? (t-.6)/.4 : 0; })) return false;
+    V.sc = null; V.finT = 1; V.finCut = 1; V.gLabel = ''; return wait(400, tok); }
   if (s.type==='deco'){ if (!await tween(2600*spd(), t => V.deco[s.kind] = t, tok)) return false; return wait(300, tok); }
   if (s.type==='done'){ if (!await tween(5600*spd(), t => { V.doneT = clamp(t*3.5, 0, 1); V.spin = ease(t); }, tok)) return false; V.spin = 0; return true; }
   return true;
@@ -1457,7 +1701,7 @@ function saveDesign(){ try { localStorage.setItem(DKEY, JSON.stringify(DS)); } c
 let DS = loadDesign() || {...JSON.parse(JSON.stringify(PRESETS.rainbow)), sel:0};
 let DG = null;
 function customLesson(){ return {name:(($('#dName').value || '').trim() || '我的編織盤'), level:0, theme:'自己設計', N:DS.N, yarn:DS.yarn, warp:DS.warp, plate:'#eee4d2', stripes:DS.stripes.map(s => ({...s})), custom:true, tip:''}; }
-function designV(){ const v = WV0(); v.cam = {...DG.cams.main}; v.cutF = DG.N; v.warpT = 1; v.tail = 1; v.tape = 1; v.wt = DG.total; v.finT = 1; v.tieP = v.tieQ = v.tieK = v.finP = v.finQ = v.finK = 1; return v; }
+function designV(){ const v = WV0(); v.cam = {...DG.cams.main}; v.cutF = DG.N; v.warpT = 1; v.tail = 1; v.tape = 1; v.wt = DG.total; v.finT = 1; v.tieP = v.tieQ = v.tieK = v.finP = v.finQ = v.finK = v.finCut = 1; return v; }
 const dTotal = () => Math.round(DS.stripes.reduce((a,s) => a + s.w, 0)*10)/10;
 function renderDesign(){
   DG = weaveGeo(customLesson());
@@ -1527,7 +1771,7 @@ function thumbBox(c, img, x, y, s, label='完成的樣子'){
   c.fillStyle='#7a625d'; c.font = `${3.6*MM}px ${DISPLAY}`; c.textAlign='center'; c.fillText(label, x+s/2, y+5.6*MM); c.textAlign='left';
   roundRect(c, x+3*MM, y+8*MM, s-6*MM, s-6*MM, 3*MM, '#2f9e85'); c.drawImage(img, x+3*MM, y+8*MM, s-6*MM, s-6*MM);
 }
-function renderWeaveImg(G, res){ if (!init3()) return mk(res); const kit = WeaveKit(G), v = WV0(); v.cam = {...G.cams.deco}; v.cutF = G.N; v.amp = 1; v.warpT = 1; v.tail = 1; v.tape = 1; v.wt = G.total; v.finT = 1; v.tieP = v.tieQ = v.tieK = v.finP = v.finQ = v.finK = 1; for (const d of G.decos) v.deco[d] = 1; v.flipE = 0; kit.sync(v); return snap3(kit, {...v.cam, el:64}, res); }
+function renderWeaveImg(G, res){ if (!init3()) return mk(res); const kit = WeaveKit(G), v = WV0(); v.cam = {...G.cams.deco}; v.cutF = G.N; v.amp = 1; v.warpT = 1; v.tail = 1; v.tape = 1; v.wt = G.total; v.finT = 1; v.tieP = v.tieQ = v.tieK = v.finP = v.finQ = v.finK = v.finCut = 1; for (const d of G.decos) v.deco[d] = 1; v.flipE = 0; kit.sync(v); return snap3(kit, {...v.cam, el:64}, res); }
 function renderPipeImg(PG, res){ if (!init3()) return mk(res); const kit = PipeKit(PG), f = pipeFinal(PG); kit.sync(f); return snap3(kit, pipeCam(f.cam), res); }
 async function makeWeaveSheet(les, no){
   await fontsReady();
@@ -1617,8 +1861,8 @@ async function makePipeSheet(les, no){
   let y = 223*MM; const X = 15*MM, TW = 130*MM;
   y = matLines(c, pipeMaterials(PG), X, y, TW) + 1*MM;
   c.fillStyle='#3b2b2b'; c.font = `${4.2*MM}px ${DISPLAY}`; c.fillText('步驟', X, y); y += 5.4*MM;
-  const items = les.steps.map(s => s.title + '：' + s.text);
-  y = stepLines(c, items, X, y, TW, 5*MM, 3.05*MM);
+  { const tl = les.steps.map(s => s.title), half = Math.ceil(tl.length/2), lh = Math.min(4.6*MM, (286*MM - y)/Math.max(1, half)); c.font = `500 ${Math.min(3.05*MM, lh*.7)}px ${FONT}`;
+    tl.forEach((t, i) => { const col = i < half ? 0 : 1, xx = X + col*66*MM, yy = y + (col ? i - half : i)*lh; c.fillStyle = '#a8644b'; c.fillText(String(i+1) + '.', xx, yy); c.fillStyle = '#3b2b2b'; c.fillText(t.length > 17 ? t.slice(0, 16) + '…' : t, xx + 5.5*MM, yy); }); }
   c.fillStyle='#b09a94'; c.font = `500 ${3.2*MM}px ${FONT}`; c.textAlign='right'; c.fillText(SITE.name, 195*MM, 292*MM); c.textAlign='left';
   thumbBox(c, renderPipeImg(PG, 600), 150*MM, 222*MM, 45*MM);
   checkBar(c, 150*MM, 284*MM);
@@ -1633,20 +1877,20 @@ async function makeCover(unit){
   bunting(c, Wd, 10*MM);
   c.font = `${15*MM}px ${DISPLAY}`; c.textBaseline='alphabetic';
   let x = 18*MM; [...unitName(unit)].forEach((ch,i) => { c.save(); c.translate(x, 40*MM); c.rotate([-.06,.04,-.03,.05][i]); c.fillStyle = CUTE[i]; c.fillText(ch,0,0); c.restore(); x += c.measureText(ch).width + 1*MM; });
-  c.fillStyle='#3b2b2b'; c.font = `${8*MM}px ${DISPLAY}`; c.fillText('6 課 A4 模板', 18*MM, 54*MM);
+  c.fillStyle='#3b2b2b'; c.font = `${8*MM}px ${DISPLAY}`; c.fillText(`${unitList(unit).length} 課 A4 模板`, 18*MM, 54*MM);
   c.font = `500 ${4*MM}px ${FONT}`; c.fillStyle='#7a625d';
   const intro = unit === 'weave' ? ['每課一張實際大小的缺口模板：剪下來放在 7 吋紙盤上，照著畫記號、剪缺口。','下方有材料、條紋尺和繞線順序；列印時選「實際大小 100%」。'] : ['每課一張實際大小的形狀模板：把毛根放在色帶上，照著彎、繞、扭。','下方有材料和步驟；列印時選「實際大小 100%」，形狀才會和示範一樣大。'];
   intro.forEach((t,i) => c.fillText(t, 18*MM, 64*MM + i*6*MM));
-  const list = unitList(unit), imgs = $$(`.card[data-u="${unit}"] img`), cw = 55*MM, ch = 64*MM, gx = 18*MM, gy = 78*MM, gap = 4*MM;
-  list.forEach((les, i) => { const col = i%3, row = Math.floor(i/3), X = gx + col*(cw+gap), Y = gy + row*(ch+gap);
-    roundRect(c, X, Y, cw, ch, 4*MM, '#fff', '#f1d8c6'); roundRect(c, X+2.5*MM, Y+2.5*MM, cw-5*MM, cw-8*MM, 3*MM, '#2f9e85');
-    const im = cw-8*MM; if (imgs[i] && imgs[i].complete && imgs[i].naturalWidth) c.drawImage(imgs[i], X+4*MM, Y+1*MM, im, im);
-    c.fillStyle='#3b2b2b'; c.font = `${5*MM}px ${DISPLAY}`; c.fillText(`${i+1}. ${les.name}`, X+3*MM, Y+cw+1.5*MM);
-    c.fillStyle='#b8894a'; c.font = `${3.6*MM}px ${DISPLAY}`; c.fillText(stars(les.level), X+3*MM, Y+cw+7.2*MM); });
-  c.fillStyle='#3b2b2b'; c.font = `${4.6*MM}px ${DISPLAY}`; c.fillText('給帶領者', 18*MM, 228*MM);
+  const list = unitList(unit), imgs = $$(`.card[data-u="${unit}"] img`), many = list.length > 6, cols = many ? 5 : 3, gap = many ? 2.5*MM : 4*MM, gx = 18*MM, gy = 78*MM, cw = (174*MM - gap*(cols-1))/cols, ch = cw + (many ? 9.5 : 9)*MM;
+  list.forEach((les, i) => { const col = i%cols, row = Math.floor(i/cols), X = gx + col*(cw+gap), Y = gy + row*(ch+gap);
+    roundRect(c, X, Y, cw, ch, 3*MM, '#fff', '#f1d8c6'); roundRect(c, X+1.5*MM, Y+1.5*MM, cw-3*MM, cw-3*MM, 2.5*MM, '#93a898');
+    if (imgs[i] && imgs[i].complete && imgs[i].naturalWidth) c.drawImage(imgs[i], X+1.5*MM, Y+1.5*MM, cw-3*MM, cw-3*MM);
+    c.fillStyle='#3b2b2b'; c.font = `600 ${(many ? 3.5 : 5)*MM}px ${DISPLAY}`; c.fillText(`${i+1}. ${les.name}`, X+2*MM, Y+cw+(many ? 3.6 : 4.5)*MM);
+    c.fillStyle='#b8894a'; c.font = `${(many ? 2.8 : 3.6)*MM}px ${DISPLAY}`; c.fillText(stars(les.level), X+2*MM, Y+cw+(many ? 7.4 : 9.2)*MM); });
+  c.fillStyle='#3b2b2b'; c.font = `${4.6*MM}px ${DISPLAY}`; c.fillText('給帶領者', 18*MM, (unitList(unit).length > 6 ? 243 : 228)*MM);
   c.font = `500 ${3.7*MM}px ${FONT}`; c.fillStyle='#5f4c47';
-  const notes = unit === 'weave' ? ['練雙手協調（一手扶盤、一手穿針）、捏握塑膠針、手指靈巧度，和「上、下、上、下」的序列記憶。','缺口一定是奇數，下一圈才會自然和上一圈相反。手抖或力氣弱：改粗毛線或布條、缺口剪寬一點、用鈍頭塑膠針或毛線尾端纏膠帶。','★ 1–2 課先熟悉上下編；★★ 3–4 課換色、剪花瓣；★★★ 5–6 課缺口多、有繞線技巧和裝飾，可分兩次完成。'] : ['練雙手協調（一手捏住、一手彎）、指尖捏力與扭轉、手指靈巧度，和照著順序一步一步做的序列記憶。','毛根裡面有鐵絲，剪開的尖端要往內折；手抖或力氣弱可改用粗毛根，捲螺旋時繞在鉛筆上。','★ 1–2 課只要彎和扭；★★ 3–4 課多根組合；★★★ 5–6 課連續彎折和裝飾，可分兩次完成。'];
-  let ny = 236*MM; notes.forEach(t => { wrapText(c, t, 174*MM).forEach(l => { c.fillText(l, 18*MM, ny); ny += 4.9*MM; }); ny += 1.8*MM; });
+  const notes = unit === 'weave' ? ['練雙手協調（一手扶盤、一手穿針）、捏握塑膠針、手指靈巧度，和「上、下、上、下」的序列記憶。','缺口一定是奇數，下一圈才會自然和上一圈相反。手抖或力氣弱：改粗毛線或布條、缺口剪寬一點、用鈍頭塑膠針或毛線尾端纏膠帶。','★ 1–2 課先熟悉上下編；★★ 3–4 課換色、剪花瓣；★★★ 5–6 課缺口多、有繞線技巧和裝飾，可分兩次完成。'] : ['練雙手協調（一手捏住、一手彎）、指尖捏力與扭轉、手指靈巧度，和照著順序一步一步做的序列記憶。','毛根裡面有鐵絲，剪開的尖端要往內折；手抖或力氣弱可改用粗毛根，捲螺旋時繞在鉛筆上。','★ 只要彎和扭；★★ 多一點步驟或幾根組合；★★★ 連續彎折、纏繞和裝飾，可分兩次完成。每拿出一根新的毛根，動畫都會先放在旁邊、再告訴你哪一端先固定。'];
+  let ny = (unitList(unit).length > 6 ? 250 : 236)*MM; notes.forEach(t => { wrapText(c, t, 174*MM).forEach(l => { c.fillText(l, 18*MM, ny); ny += 4.9*MM; }); ny += 1.8*MM; });
   c.fillStyle='#b09a94'; c.font = `500 ${3.5*MM}px ${FONT}`; c.textAlign='right'; c.fillText(SITE.name, 192*MM, 292*MM);
   return cv;
 }
@@ -1707,7 +1951,7 @@ let thumbsReady;
 { const lib = $('#library');
   for (const u of UNITS){
     const g = document.createElement('div'); g.className='lib-group';
-    g.innerHTML = `<h3>${unitName(u)}<small>${u === 'weave' ? '剪缺口、繞線、一上一下編' : '彎、繞、扭轉、捲螺旋'}・★ 1–2 課 ★★ 3–4 課 ★★★ 5–6 課</small></h3><div class="cards"></div>`;
+    g.innerHTML = `<h3>${unitName(u)}<small>${u === 'weave' ? '剪缺口、繞線、一上一下編' : '彎、繞、扭轉、捲螺旋'}・由簡到難 ★ → ★★★</small></h3><div class="cards"></div>`;
     const cards = g.querySelector('.cards');
     unitList(u).forEach((les, i) => { const b = document.createElement('button'); b.className='card'; b.dataset.u = u; b.dataset.i = i;
       const sub = u === 'weave' ? `${les.N} 個缺口` : `${les.cleaners.length} 根毛根`;
@@ -1717,7 +1961,7 @@ let thumbsReady;
     lib.appendChild(g);
   }
   thumbsReady = (async () => { await new Promise(r => setTimeout(r, 700));
-    for (const u of UNITS) for (let i=0;i<6;i++){ const les = unitList(u)[i], img = $(`.card[data-u="${u}"][data-i="${i}"] img`);
+    for (const u of UNITS) for (let i=0;i<unitList(u).length;i++){ const les = unitList(u)[i], img = $(`.card[data-u="${u}"][data-i="${i}"] img`);
       const cv = u === 'weave' ? renderWeaveImg(weaveGeo(les), 320) : renderPipeImg(pipeGeo(les), 320);
       img.src = cv.toDataURL('image/png'); await new Promise(r => img.complete ? r() : (img.onload = r)); await new Promise(r => setTimeout(r, 20)); } })();
 }
@@ -1726,7 +1970,7 @@ function renderStepList(){
   lessonSteps.forEach((s, i) => { const li = document.createElement('li'), b = document.createElement('button');
     b.innerHTML = `<span class="n">${i+1}</span><span>${s.title}</span>${s.swatch ? `<i class="sw" style="background:${s.swatch}"></i>` : ''}`; b.onclick = () => runLessonStep(i); li.appendChild(b); ol.appendChild(li); });
 }
-const nextAction = () => { if (S.lstep >= lessonSteps.length-1){ if (S.lesson < 0) setTab('design'); else loadLesson(S.unit, (S.lesson+1)%6); } else runLessonStep(S.lstep+1); };
+const nextAction = () => { if (S.lstep >= lessonSteps.length-1){ if (S.lesson < 0) setTab('design'); else loadLesson(S.unit, (S.lesson+1)%unitList(S.unit).length); } else runLessonStep(S.lstep+1); };
 $('#prevStep').onclick = () => runLessonStep(S.lstep-1);
 $('#nextStep').onclick = nextAction;
 $('#replayStep').onclick = () => runLessonStep(S.lstep);
@@ -1734,7 +1978,7 @@ $('#autoPlay').onclick = async () => { if (!LD) return; cancelAnim(); const tok 
 const fileBase = () => S.lesson < 0 ? curLes().name : `第${S.lesson+1}課_${curLes().name}`;
 $('#a4One').onclick = () => buildPdf([{unit:S.unit, les:curLes(), no:S.lesson < 0 ? 0 : S.lesson+1}], `${unitName(S.unit)}模板_${fileBase()}.pdf`);
 $('#a4Unit').onclick = () => buildPdf(unitPages(S.lesson < 0 ? 'weave' : S.unit), `${unitName(S.lesson < 0 ? 'weave' : S.unit)}_6課A4模板.pdf`);
-$('#a4All').onclick = () => buildPdf(UNITS.flatMap(u => unitPages(u)), `${SITE.name.replace('・','')}_${UNITS.length*6}課A4模板.pdf`);
+$('#a4All').onclick = () => buildPdf(UNITS.flatMap(u => unitPages(u)), `${SITE.name.replace('・','')}_${NLES}課A4模板.pdf`);
 $('#lRecord').onclick = () => { if (LD) recordWith(tok => playAll(tok, true), `${unitName(S.unit)}教學_${fileBase()}`); };
 $('#backDesign').onclick = () => setTab('design');
 const playCustom = () => { S.custom = customLesson(); loadLesson('weave', -1); return true; };
@@ -1807,7 +2051,7 @@ function updateUI(){
   $$('.seg[data-key="speed"] button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === S.speed)));
   if (lesson){
     const s = lessonSteps[S.lstep], weave = S.unit === 'weave';
-    $('#lNum').textContent = custom ? '自己設計・紙盤編織' : `${unitName(S.unit)}・第 ${S.lesson+1} 課・共 6 課`;
+    $('#lNum').textContent = custom ? '自己設計・紙盤編織' : `${unitName(S.unit)}・第 ${S.lesson+1} 課・共 ${unitList(S.unit).length} 課`;
     $('#lName').textContent = les.name;
     const chips = [];
     if (les.level) chips.push(`<span class="chip"><span class="stars">${stars(les.level)}</span></span>`);
@@ -1825,7 +2069,7 @@ function updateUI(){
     $('#nextStep').textContent = nextLabel;
     for (const id of ['#nextStep','#replayStep','#autoPlay','#lRecord','#a4One','#a4Unit']) $(id).disabled = recording || !LD;
     $('#backDesign').hidden = !custom; $('#a4One').textContent = custom ? '下載我的 A4（PDF）' : '下載這課 A4（PDF）';
-    $('#a4Unit').hidden = custom; $('#a4Unit').textContent = ONLY ? '全部 6 課（PDF）' : `${unitName(S.unit)} 6 課（PDF）`;
+    $('#a4Unit').hidden = custom; $('#a4Unit').textContent = ONLY ? `全部 ${unitList(S.unit).length} 課（PDF）` : `${unitName(S.unit)} ${unitList(S.unit).length} 課（PDF）`;
     $('#a4Label').textContent = weave ? 'A4 缺口模板（實際大小）' : 'A4 形狀模板（實際大小）';
     $('#a4Note').textContent = weave ? '列印時選「實際大小 100%」，圓形模板才會是 18 公分，可以直接貼在紙盤上照著剪。' : '列印時選「實際大小 100%」，形狀才會是實際大小，把毛根放在上面照著彎。';
     $$('.card').forEach(c => c.setAttribute('aria-current', String(!custom && c.dataset.u === S.unit && +c.dataset.i === S.lesson)));
@@ -1868,9 +2112,9 @@ new MutationObserver(retheme).observe(document.documentElement, {attributes:true
 
 { $('#siteName').textContent = SITE.name; $('#siteDesc').textContent = SITE.desc; $('#siteSeal').textContent = SITE.seal; document.title = SITE.name;
   if (SITE.other){ const a = $('#otherLink'); a.hidden = false; a.textContent = `也看看：${SITE.other[0]} →`; a.href = SITE.other[1]; }
-  $('#libTitle').textContent = `${UNITS.length*6} 個教案`; $('#a4All').textContent = `下載全部 ${UNITS.length*6} 課 A4（PDF，含封面）`;
+  $('#libTitle').textContent = `${NLES} 個教案`; $('#a4All').textContent = `下載全部 ${NLES} 課 A4（PDF，含封面）`;
   if (ONLY === 'pipe') $('.modes').hidden = true;
-  if (ONLY === 'weave'){ $('.modes [data-tab="pipe"]').hidden = true; $('.modes [data-tab="weave"]').textContent = '6 個教案'; }
+  if (ONLY === 'weave'){ $('.modes [data-tab="pipe"]').hidden = true; $('.modes [data-tab="weave"]').textContent = `${WEAVE.length} 個教案`; }
   const W = ONLY !== 'pipe', P_ = ONLY !== 'weave', N_ = [];
   N_.push(['練到哪些能力', `<ul>${W ? '<li>雙手協調：一手扶紙盤、一手穿針。</li><li>捏握：拇指和食指捏住塑膠針，把線拉緊。</li><li>手指靈巧度：一上一下穿線。</li><li>序列記憶：「上、下、上、下」的口訣。</li>' : ''}${P_ ? '<li>雙手協調：一手捏住毛根、一手彎和扭。</li><li>指尖捏力：扭轉固定、把尾端捲成小圈。</li><li>手眼協調：對著模板彎出一樣的形狀。</li><li>序列記憶：照著步驟一步一步做。</li>' : ''}</ul>`]);
   N_.push(['由簡到難', `<ul>${W ? '<li>★ 缺口少（7～9 個）、一種或幾種顏色，先熟悉上下編。</li><li>★★ 換色打結、剪花瓣。</li><li>★★★ 缺口多（13～15 個）、繞線技巧和裝飾，可以分兩次上課。</li>' : ''}${P_ ? '<li>★ 一、兩根毛根，只要彎和扭。</li><li>★★ 好幾根毛根組合。</li><li>★★★ 一根連續彎折到底、或多段組合加裝飾，可以分兩次上課。</li>' : ''}</ul>`]);
