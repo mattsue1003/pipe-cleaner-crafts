@@ -566,13 +566,16 @@ const PIPE = [
        half.push(...join(ant, linePts(ax, ay, hx, hy, 24), linePts(hx, hy, hx, 1.9, 24)));
        const u = []; for (let i=1;i<12;i++){ const q = Math.PI - Math.PI*i/12; u.push([Math.cos(q)*.2, 1.9 + Math.sin(q)*.2]); }
        const right = half.slice().reverse().map(([x,y]) => [-x, y]); return asIs([...half, ...u, ...right]); };
-     return {wings, bodyS: body(false), bodyC: body(true)}; },
+     const hu = linePts(-.2, 1.9 - 6.4, -.2, 1.9, 60), uu = []; for (let i=1;i<12;i++){ const q = Math.PI - Math.PI*i/12; uu.push([Math.cos(q)*.2, 1.9 + Math.sin(q)*.2]); }
+     const bodyU = asIs([...hu, ...uu, ...hu.slice().reverse().map(([x,y]) => [-x, y])]);
+     return {wings, bodyU, bodyC: body(true)}; },
    steps:[
     {title:'彎出左上的大翅膀', text:'紫色毛根的一端放在中心，往左上彎出一個大圓圈，再繞回中心。', tip:'大翅膀大約和手掌心一樣大。', set:{0:{sh:'wings', mode:'form', from:'start', f:SH => SH.wings.f[0]}}},
     {title:'彎出左下的小翅膀', text:'在中心捏住，往左下彎出一個比較小的圓圈，繞回中心。', set:{0:{sh:'wings', mode:'form', from:'start', f:SH => SH.wings.f[1]}}},
     {title:'右邊也一樣', text:'在中心交叉過去，右邊先彎小翅膀、再彎大翅膀，最後回到中心。', tip:'和左邊對照著做，左右才會一樣大。', set:{0:{sh:'wings', mode:'form', from:'start'}}},
-    {title:'黑色對摺當身體', text:'黑色毛根對摺，夾住翅膀的中間，把兩根黑色往上扭轉幾圈，變成蝴蝶的身體。', tip:'扭到頭的位置就停，上面留兩段當觸角。', set:{1:{sh:'bodyS', mode:'morph', from:'mid'}}, twists:[{x:0, y:.45, ang:90, len:2.7, c:['black','black']}]},
-    {title:'觸角捲小圈', text:'上面兩段黑色往外分開當觸角，尾端各捲一個小圈圈。', tip:'用指尖捏住尾端，一邊轉一邊捲。', set:{1:{sh:'bodyC', mode:'morph', from:'mid'}}}
+    {title:'黑色毛根對摺，夾住翅膀', text:'黑色毛根從中間對摺成 U 字形。折起來的地方放在翅膀的正下方，兩根黑色一左一右，把翅膀中間交叉的地方夾在裡面。', tip:'先不要扭，確定翅膀的中心有被兩根黑色夾住。', set:{1:{sh:'bodyU', mode:'morph', from:'mid'}}, marks:[{cl:1, s:.5, text:'折點在翅膀下面'}]},
+    {title:'兩根黑色一起扭，變成身體', text:'一手捏住下面的折點，另一手把兩根黑色互相扭轉 2 圈，扭到翅膀上方一點點就停。扭好的這一段就是蝴蝶的身體，翅膀也被固定住了。', tip:'上面要留兩段沒有扭的，等一下當觸角。', twists:[{x:0, y:.45, ang:90, len:2.7, c:['black','black']}]},
+    {title:'觸角分開、捲小圈', text:'把上面沒有扭的兩段黑色往左右分開，變成 V 字形的觸角，尾端各捲一個小圈圈。', tip:'用指尖捏住尾端，一邊轉一邊捲。', set:{1:{sh:'bodyC', mode:'morph', from:'mid'}}}
    ], done:'蝴蝶完成了！翅膀可以再貼上亮片，或用夾子夾在窗簾上。'},
   {name:'小狗', level:3, theme:'連續彎折・一根做到底', cleaners:[{c:'brown', txt:'1 根（30 公分）'}], extra:['活動眼睛 1 顆', '白膠'],
    tip:'每彎一個部位就停下來，對照 A4 模板放在上面比一比，再彎下一個。',
@@ -666,14 +669,18 @@ function straightAt(B, from){
 }
 function fitCam(PG, st, idx){
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-  st.cl.forEach(c => { if (!c.vis) return; for (const [x,y] of c.geo){ x0 = Math.min(x0,x); y0 = Math.min(y0,y); x1 = Math.max(x1,x); y1 = Math.max(y1,y); } });
+  // 還沒彎完的毛根：鏡頭只對準「已經彎好的部分＋後面一小段」，不然長長的尾巴會讓作品變得很小
+  st.cl.forEach(c => { if (!c.vis) return; const M = c.geo.length, part = c.sh && c.f < .98, m = (M-1)/2, ex = 26;
+    c.geo.forEach(([x,y], j) => { if (part){ const ok = c.from === 'start' ? j <= c.f*(M-1) + ex : c.from === 'end' ? j >= (1-c.f)*(M-1) - ex : Math.abs(j - m) <= c.f*m + ex; if (!ok) return; }
+      x0 = Math.min(x0,x); y0 = Math.min(y0,y); x1 = Math.max(x1,x); y1 = Math.max(y1,y); }); });
   for (const d of PG.decos) if (d.step <= idx){ x0 = Math.min(x0, d.x-1); x1 = Math.max(x1, d.x+1); y0 = Math.min(y0, d.y - (d.h || 0) - 1); y1 = Math.max(y1, d.y+1); }
   if (x0 > x1){ x0 = -5; x1 = 5; y0 = -5; y1 = 5; }
-  const w = x1-x0 + 1.6, h = y1-y0 + 1.6, k = clamp(Math.min(800/w, 640/h), 22, 70);
+  const w = x1-x0 + 2.4, h = y1-y0 + 2.4, k = clamp(Math.min(800/w, 640/h), 22, 62);
   return {k, cx: 500 - k*(x0+x1)/2, cy: 515 - k*(y0+y1)/2};
 }
 /* 某一刻的畫面：A 狀態 → B 狀態，進度 t（A = -1 代表桌上還沒有東西） */
 function pipeFrame(PG, A, B, t, si){
+  if (B < 0){ B = 0; A = -1; t = 0; }   // 第一步還沒開始：桌上是空的
   const f = {cl:[], cam:null, twists:[], decos:[], marks:[], si, t, A, B};
   const sB = PG.ST[B], sA = A < 0 ? null : PG.ST[A], step = lessonSteps[si] || {};
   PG.cls.forEach((cl, i) => {
